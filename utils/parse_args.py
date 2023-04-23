@@ -5,13 +5,13 @@ def parse_args():
     # Parses the node2vec arguments.
     parser = argparse.ArgumentParser(description="Run node2vec.")
 
-    parser.add_argument('--jsonpath', nargs='?', default="data/wikihow.json", help='Input json file path')
+    parser.add_argument('--jsonpath', nargs='?', default="scratch/data/wikihow.json", help='Input json file path')
 
-    parser.add_argument('--input', nargs='?', default='data/graph/wikihow.edgelist', help='Input graph path')
+    parser.add_argument('--input', nargs='?', default='scratch/data/graph/wikihow.edgelist', help='Input graph path')
 
-    parser.add_argument('--output', nargs='?', default='data/emb/wikihow.emb', help='Embeddings path')
+    parser.add_argument('--output', nargs='?', default='scratch/data/emb/wikihow.emb', help='Embeddings path')
 
-    parser.add_argument('--modelpath', nargs='?', default='data/model/wikihow.model', help='Models path')
+    parser.add_argument('--modelpath', nargs='?', default='scratch/data/model/wikihow.model', help='Models path')
 
     parser.add_argument('--dimensions', type=int, default=128, help='Number of dimensions. Default is 128.')
 

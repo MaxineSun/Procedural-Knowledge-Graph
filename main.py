@@ -26,7 +26,7 @@ def main(args):
     #     pickle.dump(walks, fp)
     # with open("data/walks_200", "wb") as fp:
     #     pickle.dump(walks[:200], fp)
-    with open("data/walks_200", "rb") as fp:
+    with open("scratch/data/walks_200", "rb") as fp:
         walks = pickle.load(fp)
 
     # process.embedding2graph()
