@@ -22,7 +22,6 @@ def main(args):
     with open("../scratch/data/sqlist", "wb") as fp:
         pickle.dump(sqlist, fp)
 
-
 if __name__ == "__main__":
     args = pa.parse_args()
     main(args)
