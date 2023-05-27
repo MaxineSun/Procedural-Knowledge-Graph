@@ -1,26 +1,32 @@
-import pickle
-import utils.json2graph as jg
-import utils.graph2vec as gv
+import utils.json2dataset as jd
 import utils.parse_args as pa
-import utils.sq_entity_resolution as sqer
+# import utils.sq_dbscan as sqer
+import utils.sq_ER_GPT as sqer
+# import utils.sq_clustering as sqer
 
 from torchmetrics import RetrievalHitRate
 from gensim.models import Word2Vec
+from sklearn.cluster import KMeans
+import pickle
+# import utils.train 
 
 
 def main(args):
-    # process = jg.Data_Process()
-    # issq = process.json2embedding(args.jsonpath)
-    # train, val, test = process.embedding2graph()
-    # nx_G = gv.read_graph(args)
-    # G = gv.Graph(nx_G, args.directed, args.p, args.q)
-    # G.preprocess_transition_probs()
-    # walks = G.simulate_walks(args.num_walks, args.walk_length, process.mqlen)
-    # gv.learn_embeddings(args, walks, train, val, test)
-    process = sqer.Data_Process()
-    sqlist = process.json2embedding(args.jsonpath)
-    with open("../scratch/data/sqlist", "wb") as fp:
-        pickle.dump(sqlist, fp)
+    # process = sqer.DBScan_Process()
+    # process.Clustering(args.density)
+    # process = sqer.GPT_Val_Process()
+    # process.gpt_val()
+
+    process = jd.Data_Process()
+    dataset = process.json2dataset(args.jsonpath, args.datasetpath)
+    with open("../scratch/data/dataset", "wb") as fp:
+        pickle.dump(dataset, fp)
+    fp.close()
+
+    # with open("../scratch/data/dataset", "rb") as fp:
+    #     dataset = pickle.load(fp)
+    # fp.close()
+
 
 if __name__ == "__main__":
     args = pa.parse_args()

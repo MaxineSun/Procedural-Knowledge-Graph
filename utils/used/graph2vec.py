@@ -41,12 +41,11 @@ class Graph:
 
         return walk
 
-    def simulate_walks(self, num_walks, walk_length, mqlen):
+    def simulate_walks(self, num_walks, walk_length):
         # Repeatedly simulate random walks from each node.
         G = self.G
         walks = []
         nodes = list(G.nodes())
-        nodes = [x for x in nodes if x <= mqlen]
         print('Walk iteration:')
         for _ in tqdm(range(num_walks)):
             random.shuffle(nodes)
@@ -161,22 +160,21 @@ def read_graph(args):
     return G
 
 
-def learn_embeddings(args, walks, train, val, test):
+def learn_embeddings(args, walks):
     walks = [list(map(str, walk)) for walk in walks]
-    batch_size=2
-    model = Word2Vec.load(args.modelpath)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    model.train()
-    for epoch in range(20):
-        for i in range(0, len(train), batch_size=2):
-            optimizer.zero_grad()
-            batch_data = train[i:i+batch_size]
-            preds = model.wv.most_similar(batch_data, topn=30)
-            hr2 = RetrievalHitRate(k=2)
-            loss = hr2(preds, indexes=indexes)
-    model = Word2Vec(walks, vector_size=args.dimensions, window=args.window_size, min_count=0, workers=args.workers,
-                     sg=1, epochs=args.iter)
+    # batch_size=15
+    # model = Word2Vec.load(args.modelpath)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    # model.train()
+    # for epoch in range(20):
+    #     for i in range(0, len(train), batch_size=15):
+    #         optimizer.zero_grad()
+    #         batch_data = train[i:i+batch_size]
+    #         preds = model.wv.most_similar(batch_data, topn=30)
+    #         hr2 = RetrievalHitRate(k=2)
+    #         loss = hr2(preds, indexes=indexes)
+    model = Word2Vec(walks, vector_size=args.dimensions, window=args.window_size, min_count=0, workers=args.workers, sg=1, epochs=args.iter)
     model.wv.save_word2vec_format(args.output)
     model.save(args.modelpath)
 
-    return
+    return model

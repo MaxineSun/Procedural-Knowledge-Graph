@@ -7,11 +7,15 @@ def parse_args():
 
     parser.add_argument('--jsonpath', nargs='?', default="../scratch/data/wikihow.json", help='Input json file path')
 
-    parser.add_argument('--input', nargs='?', default='../scratch/data/graph/wikihow.edgelist', help='Input graph path')
+    parser.add_argument('--datasetpath', nargs='?', default="../scratch/data/", help='dataset file path')
+
+    parser.add_argument('--input', nargs='?', default='../scratch/data/graph/sq.edgelist', help='Input graph path')
 
     parser.add_argument('--output', nargs='?', default='../scratch/data/emb/wikihow.emb', help='Embeddings path')
 
     parser.add_argument('--modelpath', nargs='?', default='../scratch/data/model/wikihow.model', help='Models path')
+
+    parser.add_argument('--sq_hash_path', nargs='?', default='../scratch/data/sq_hash', help='sq hash table path')
 
     parser.add_argument('--dimensions', type=int, default=128, help='Number of dimensions. Default is 128.')
 
@@ -26,6 +30,8 @@ def parse_args():
     parser.add_argument('--workers', type=int, default=8, help='Number of parallel workers. Default is 8.')
 
     parser.add_argument('--p', type=float, default=1000, help='Return hyperparameter. Default is 1000.')
+
+    parser.add_argument('--density', type=float, default=0.65, help='dbscan density.')
 
     parser.add_argument('--q', type=float, default=0.3, help='Inout hyperparameter. Default is 0.3.')
 
