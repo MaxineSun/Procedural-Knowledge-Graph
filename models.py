@@ -4,9 +4,9 @@ from torch_geometric.nn import GCNConv, SGConv, APPNP
 import torch.nn.functional as F
 
 
-class GCNModel(nn.Module):
+class GCNet(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
-        super(GCNModel, self).__init__()
+        super(GCNet, self).__init__()
         self.conv1 = GCNConv(input_dim, hidden_dim)
         self.conv2 = GCNConv(hidden_dim, output_dim)
         self.log_softmax = nn.LogSoftmax(dim=1)
@@ -15,7 +15,7 @@ class GCNModel(nn.Module):
         x = self.conv1(x, edge_index)
         x = F.relu(x)
         x = self.conv2(x, edge_index)
-        x = self.log_softmax(x)
+        # x = self.log_softmax(x)
         return x
 
 

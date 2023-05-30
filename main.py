@@ -18,10 +18,10 @@ def main(args):
     # process.gpt_val()
 
     process = jd.Data_Process()
-    dataset = process.json2dataset(args.jsonpath, args.datasetpath)
-    with open("../scratch/data/dataset", "wb") as fp:
-        pickle.dump(dataset, fp)
-    fp.close()
+    process.json2dataset(args.jsonpath, args.datasetpath)
+    # with open("../scratch/data/processed/dataset", "wb") as fp:
+    #     pickle.dump(dataset, fp)
+    # fp.close()
 
     # with open("../scratch/data/dataset", "rb") as fp:
     #     dataset = pickle.load(fp)
