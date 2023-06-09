@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument('--q', type=float, default=0.3, help='Inout hyperparameter. Default is 0.3.')
 
     parser.add_argument('--weighted', dest='weighted', action='store_true',
-                        help='Boolean specifying (un)weighted. Default is unweighted.')
+                        help='Boolean specifying (un)weighted. Default is unweighted.') 
     parser.add_argument('--unweighted', dest='unweighted', action='store_false')
     parser.set_defaults(weighted=True)
 
