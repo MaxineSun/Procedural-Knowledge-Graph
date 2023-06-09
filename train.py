@@ -1,65 +1,71 @@
-import sys
-sys.path.append("..")
-from tqdm import tqdm
-from models import *
+from models import Model
 import torch
-import torch.nn as nn
 import pickle
+import torch.nn.functional as F
 import numpy as np
-# import os
-# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+import argparse
+import utils.parse_args as pa
+
+def train(args):
+    with open("../scratch/data/train_loader8", "rb") as fp:
+        train_loader = pickle.load(fp)
+    fp.close()
+
+    with open("../scratch/data/val_loader8", "rb") as fp:
+        val_loader = pickle.load(fp)
+    fp.close()
+
+    if args.train_model == "gnn":
+        model = Model(hidden_channels=64, data=train_loader.data)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        for epoch in range(1, 12):
+            total_loss = total_examples = 0
+            for sampled_data in train_loader:
+                optimizer.zero_grad()
+                sampled_data.to(device)
+                pred = model(sampled_data)
+                ground_truth = sampled_data["mq","queries","sq"].edge_label
+                loss = F.binary_cross_entropy_with_logits(pred, ground_truth)
+                loss.backward()
+                optimizer.step()
+                total_loss += float(loss) * pred.numel()
+                total_examples += pred.numel()
+            print(f"Epoch: {epoch:03d}, Loss: {total_loss / total_examples:.4f}")
+
+        sampled_data = next(iter(val_loader))
+
+        preds = []
+        ground_truths = []
+        for sampled_data in val_loader:
+            with torch.no_grad():
+                sampled_data.to(device)
+                preds.append(model(sampled_data))
+                ground_truths.append(sampled_data["mq","queries","sq"].edge_label)
+        pred = torch.cat(preds, dim=0).cpu().numpy()
+        ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
+        pred = np.where(pred > 0, 1, 0)
+        accu = sum(ground_truth==pred)/len(pred)
+
+        print(f"accu: {accu:.4f}")
+
+    if args.train_model == "random guess":
+        preds = []
+        ground_truths = []
+        for sampled_data in val_loader:
+            # sampled_data.to(device)
+            # preds.append(model(sampled_data))
+            ground_truths.append(sampled_data["mq","queries","sq"].edge_label)
+            print(sampled_data["mq","queries","sq"].edge_label)
+        pred = torch.cat(preds, dim=0).cpu().numpy()
+        ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
+    
+    if args.train_model == "MLP":
+        pass
 
 
-def index_to_mask(index, size):
-    mask = torch.zeros(size, dtype=torch.bool)
-    mask[index] = 1
-    return mask
-
-
-def random_splits(data, train_len, val_len, seed=42):
-    index = [i for i in range(0, data.y.shape[0])]
-    train_idx = []
-    rnd_state = np.random.RandomState(seed)
-    train_len = int(round(0.6 * len(data.y)))
-    train_idx = rnd_state.choice(index, train_len, replace=False)
-    rest_index = [i for i in index if i not in train_idx]
-    val_idx = rnd_state.choice(rest_index, val_len, replace=False)
-    test_idx = [i for i in rest_index if i not in val_idx]
-
-    data.data.train_mask = index_to_mask(train_idx, size=data.y.shape[0])
-    data.data.val_mask = index_to_mask(val_idx, size=data.y.shape[0])
-    data.data.test_mask = index_to_mask(test_idx, size=data.y.shape[0])
-    return data
-
-with open("../scratch/data/processed/dataset", "rb") as fp:
-    dataset = pickle.load(fp)
-fp.close()
-num_classes = dataset.num_classes
-train_len = int(round(0.6 * len(dataset.y)))
-val_len = int(round(0.2 * len(dataset.y)))
-dataset = random_splits(dataset, train_len, val_len)
-dataset = dataset.data.to('cuda')
-
-model = GCNet(dataset.num_features, 32, num_classes)
-model.double()
-model = model.to('cuda')
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-criterion = nn.CrossEntropyLoss()
-
-for _ in tqdm(range(100)):
-    model.train()
-    optimizer.zero_grad()
-    output = model(dataset.x, dataset.edge_index.T)[dataset.train_mask]
-    loss = criterion(output, dataset.y[dataset.train_mask])
-    loss.backward()
-    optimizer.step()
-
-model.eval()
-output = model(dataset.x, dataset.edge_index.T)[dataset.train_mask]
-loss = criterion(output, dataset.y[dataset.train_mask])
-output_test = model(dataset.x, dataset.edge_index.T)[dataset.test_mask]
-loss_test = criterion(output_test, dataset.y[dataset.test_mask])
-
-
-print(loss)
-print(loss_test)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    args = pa.parse_args()
+    train(args)

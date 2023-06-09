@@ -1,7 +1,6 @@
-import utils.json2dataset as jd
 import utils.parse_args as pa
 # import utils.sq_dbscan as sqer
-import utils.sq_ER_GPT as sqer
+import utils.json2heterII as j2d
 # import utils.sq_clustering as sqer
 
 from torchmetrics import RetrievalHitRate
@@ -17,8 +16,8 @@ def main(args):
     # process = sqer.GPT_Val_Process()
     # process.gpt_val()
 
-    process = jd.Data_Process()
-    process.json2dataset(args.jsonpath, args.datasetpath)
+    process = j2d.Data_Process()
+    process.json2dataset(args.jsonpath)
     # with open("../scratch/data/processed/dataset", "wb") as fp:
     #     pickle.dump(dataset, fp)
     # fp.close()

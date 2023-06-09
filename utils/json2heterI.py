@@ -13,22 +13,21 @@ class Data_Process:
         self.mqlen = 0
 
     def json2dataset(self, filepath, datasetpath):
-        # json_list = []
-        # with open(filepath, "r+") as f_in:
-        #     for json in jsonlines.Reader(f_in):
-        #         if len(json_list) < 40:
-        #             json_list.append(json)
+        json_list = []
+        with open(filepath, "r+") as f_in:
+            for json in jsonlines.Reader(f_in):
+                # if len(json_list) < 40:
+                json_list.append(json)
         # model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
         # model = nn.DataParallel(model)
-        # # model = model.to("cuda")
-        # mq_raw = [item["main_question"] for item in json_list]
+        # model = model.to("cuda")
+        mq_raw = [item["main_question"] for item in json_list]
         # mq_embedding = model.module.encode(mq_raw, show_progress_bar=True)
-        # mq_embedding = mq_embedding.tolist()
         # # with open("../scratch/data/mq", "rb") as fp:
         # # mq_embedding=pickle.load(fp)
         # x = mq_embedding
-        # # with open("../scratch/data/mq", "wb") as fp:
-        # #     pickle.dump(mq_embedding, fp)
+        with open("../scratch/data/mq", "wb") as fp:
+            pickle.dump(mq_raw, fp)
         # ind_point = len(mq_embedding) - 1
         # print(ind_point)
         # y = [i for i in range(ind_point + 1)]
@@ -96,8 +95,8 @@ class Data_Process:
         # with open("../scratch/data/y", "rb") as fp:
         #     y = pickle.load(fp)
         # fp.close()
-        Dataset = dg.PKG_Dataset(
-            datasetpath,
-        )
-        return Dataset
-        # return
+        # Dataset = dg.PKG_Dataset(
+        #     datasetpath,
+        # )
+        # return Dataset
+        return
