@@ -1,6 +1,15 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GCNConv, SGConv, APPNP, SAGEConv, GATv2Conv, HeteroConv, GATConv, to_hetero
+from torch_geometric.nn import (
+    GCNConv,
+    SGConv,
+    APPNP,
+    SAGEConv,
+    GATv2Conv,
+    HeteroConv,
+    GATConv,
+    to_hetero,
+)
 import torch.nn.functional as F
 from torch_geometric.data import HeteroData
 
@@ -28,10 +37,10 @@ class SGCNet(torch.nn.Module):
     def forward(self, x, edge_index, edge_weight=None):
         x = self.conv1(x, edge_index, edge_weight)
         return F.log_softmax(x, dim=1)
-    
+
 
 class APPNPNet(torch.nn.Module):
-    def __init__(self, input_dim,  out_dim, num_hid=16, K=1, alpha=0.1, dropout=0.5):
+    def __init__(self, input_dim, out_dim, num_hid=16, K=1, alpha=0.1, dropout=0.5):
         super(APPNPNet, self).__init__()
         self.lin1 = torch.nn.Linear(input_dim, num_hid)
         self.lin2 = torch.nn.Linear(num_hid, out_dim)
@@ -69,37 +78,59 @@ class GNN(torch.nn.Module):
         x = self.conv3(x, edge_index)
         x = self.conv4(x, edge_index)
         return x
+
+
 class Classifier(torch.nn.Module):
-    def forward(self, x_user, x_movie, edge_label_index):
-        # Convert node embeddings to edge-level representations:
-        edge_feat_user = x_user[edge_label_index[0]]
-        edge_feat_movie = x_movie[edge_label_index[1]]
-        # Apply dot-product to get a prediction per supervision edge:
+    def forward(self, mq, sq, edge_label_index):
+        edge_feat_user = mq[edge_label_index[0]]
+        edge_feat_movie = sq[edge_label_index[1]]
         return (edge_feat_user * edge_feat_movie).sum(dim=-1)
 
+
 class GNNModel(torch.nn.Module):
-    def __init__(self, hidden_channels, data = None):
+    def __init__(self, hidden_channels, data=None):
         super().__init__()
-        self.movie_lin = torch.nn.Linear(768, hidden_channels)
-        self.user_emb = torch.nn.Embedding(data["mq"].num_nodes, hidden_channels)
-        self.movie_emb = torch.nn.Embedding(data["sq"].num_nodes, hidden_channels)
+        self.lin = torch.nn.Linear(768, hidden_channels)
+        self.mq_emb = torch.nn.Embedding(data["mq"].num_nodes, hidden_channels)
+        self.sq_emb = torch.nn.Embedding(data["sq"].num_nodes, hidden_channels)
         self.gnn = GNN(hidden_channels)
         self.gnn = to_hetero(self.gnn, metadata=data.metadata())
         self.classifier = Classifier()
+
     def forward(self, data: HeteroData):
         x_dict = {
-          "mq": self.user_emb(data["mq"].node_id),
-          "sq": self.movie_lin(data["sq"].x) + self.movie_emb(data["sq"].node_id),
-        } 
+            "mq": self.lin(data["mq"].x), 
+            "sq": self.lin(data["sq"].x), 
+        }
         x_dict = self.gnn(x_dict, data.edge_index_dict)
         pred = self.classifier(
             x_dict["mq"],
             x_dict["sq"],
-            data["mq","queries","sq"].edge_label_index,
+            data["mq", "queries", "sq"].edge_label_index,
         )
         return pred
-    
+
 
 class MLP(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_channels, data=None):
         super().__init__()
+        self.lin1 = torch.nn.Linear(768, hidden_channels)
+        self.lin2 = torch.nn.Linear(hidden_channels, hidden_channels)
+        self.mq_emb = torch.nn.Embedding(data["mq"].num_nodes, hidden_channels)
+        self.sq_emb = torch.nn.Embedding(data["sq"].num_nodes, hidden_channels)
+        self.gnn = GNN(hidden_channels)
+        self.gnn = to_hetero(self.gnn, metadata=data.metadata())
+        self.classifier = Classifier()
+
+    def forward(self, data: HeteroData):
+        x_dict = {
+            "mq": self.lin2(torch.relu(self.lin1(data["mq"].x))),
+            "sq": self.lin2(torch.relu(self.lin1(data["sq"].x)))
+        }
+
+        pred = self.classifier(
+            x_dict["mq"],
+            x_dict["sq"],
+            data["mq", "queries", "sq"].edge_label_index,
+        )
+        return pred
