@@ -1,4 +1,4 @@
-from models import Model
+from models import GNNModel, MLP
 import torch
 import pickle
 import torch.nn.functional as F
@@ -16,7 +16,7 @@ def train(args):
     fp.close()
 
     if args.train_model == "gnn":
-        model = Model(hidden_channels=64, data=train_loader.data)
+        model = GNNModel(hidden_channels=64, data=train_loader.data)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -34,8 +34,6 @@ def train(args):
                 total_examples += pred.numel()
             print(f"Epoch: {epoch:03d}, Loss: {total_loss / total_examples:.4f}")
 
-        sampled_data = next(iter(val_loader))
-
         preds = []
         ground_truths = []
         for sampled_data in val_loader:
@@ -47,19 +45,18 @@ def train(args):
         ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
         pred = np.where(pred > 0, 1, 0)
         accu = sum(ground_truth==pred)/len(pred)
-
         print(f"accu: {accu:.4f}")
 
     if args.train_model == "random guess":
-        preds = []
+        preds = np.array([])
         ground_truths = []
         for sampled_data in val_loader:
-            # sampled_data.to(device)
-            # preds.append(model(sampled_data))
+            length = len(sampled_data["mq","queries","sq"].edge_label)
+            preds = np.append(preds, np.random.choice([0, 1], size=length, p=[2/3, 1/3]))
             ground_truths.append(sampled_data["mq","queries","sq"].edge_label)
-            print(sampled_data["mq","queries","sq"].edge_label)
-        pred = torch.cat(preds, dim=0).cpu().numpy()
-        ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
+        ground_truth = torch.cat(ground_truths, dim=0).numpy()
+        accu = np.sum(ground_truth==preds)/len(preds)
+        print(f"accu: {accu:.4f}")
     
     if args.train_model == "MLP":
         pass

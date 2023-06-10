@@ -18,8 +18,8 @@ class Data_Process:
         # json_list = []
         # with open(filepath, "r+") as f_in:
         #     for json in jsonlines.Reader(f_in):
-        #         # if len(json_list) < 8000:
-        #         json_list.append(json)
+        #         if len(json_list) < 8000:
+        #             json_list.append(json)
         # model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
         # model = nn.DataParallel(model)
         # model = model.to("cuda")
@@ -85,35 +85,41 @@ class Data_Process:
         #             edge_sq_side.append(sq_hash[current_cls[0][0]])
         #             sq_cls_ind += 1
  
-
+        # print(len(sq_x))
         # with open("../scratch/data/sq_x8", "wb") as fp:
         #     pickle.dump(sq_x, fp)
         # fp.close()
 
-        # with open("../scratch/data/edge_mq_side8", "wb") as fp:
+        # with open("../scratch/data/edge_mq_side", "wb") as fp:
         #     pickle.dump(edge_mq_side, fp)
         # fp.close()
 
-        # with open("../scratch/data/edge_sq_side8", "wb") as fp:
+        # with open("../scratch/data/edge_sq_side", "wb") as fp:
         #     pickle.dump(edge_sq_side, fp)
         # fp.close()
 
-        with open("../scratch/data/mq_x8", "rb") as fp:
+        with open("../scratch/data/mq_x", "rb") as fp:
             mq_x = pickle.load(fp)
         fp.close()
 
-        with open("../scratch/data/edge_mq_side8", "rb") as fp:
+        print("mq data loaded")
+
+        with open("../scratch/data/edge_mq_side", "rb") as fp:
             edge_mq_side = pickle.load(fp)
         fp.close()
+        print("ed data loaded")
 
-        with open("../scratch/data/edge_sq_side8", "rb") as fp:
+
+        with open("../scratch/data/edge_sq_side", "rb") as fp:
             edge_sq_side = pickle.load(fp)
         fp.close()
+        print("sq ed data loaded")
 
-        with open("../scratch/data/sq_x8", "rb") as fp:
+
+        with open("../scratch/data/sq_x", "rb") as fp:
             sq_x = pickle.load(fp)
         fp.close()
-        print("data loaded")
+        print("sq data loaded")
 
 
         data = HeteroData()
@@ -150,7 +156,7 @@ class Data_Process:
             batch_size=128,
             shuffle=True,
         )
-        with open("../scratch/data/train_loader8", "wb") as fp:
+        with open("../scratch/data/train_loader", "wb") as fp:
             pickle.dump(train_loader, fp)
         fp.close()
 
@@ -164,7 +170,7 @@ class Data_Process:
             batch_size=3 * 128,
             shuffle=False,
         )
-        with open("../scratch/data/val_loader8", "wb") as fp:
+        with open("../scratch/data/val_loader", "wb") as fp:
             pickle.dump(val_loader, fp)
         fp.close()
         print("val loader generated")
@@ -172,7 +178,7 @@ class Data_Process:
         edge_label_index = test_data["mq","queries","sq"].edge_label_index
         edge_label = test_data["mq","queries","sq"].edge_label
         test_loader = LinkNeighborLoader(
-            data=val_data,
+            data=test_data,
             num_neighbors=[20, 10],
             edge_label_index=(("mq","queries","sq"), edge_label_index),
             edge_label=edge_label,
@@ -180,12 +186,12 @@ class Data_Process:
             shuffle=False,
         )
 
-        with open("../scratch/data/test_loader8", "wb") as fp:
+        with open("../scratch/data/test_loader", "wb") as fp:
             pickle.dump(test_loader, fp)
         fp.close()
         print("test loader generated")
 
-        with open("../scratch/data/heter_data8", "wb") as fp:
+        with open("../scratch/data/heter_data", "wb") as fp:
             pickle.dump(data, fp)
         fp.close()
 

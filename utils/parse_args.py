@@ -17,7 +17,7 @@ def parse_args():
 
     parser.add_argument('--sq_hash_path', nargs='?', default='../scratch/data/sq_hash', help='sq hash table path')
 
-    parser.add_argument('--train_model', nargs='?', default="gnn", help='baseline or gnn')
+    parser.add_argument('--train_model', nargs='?', default="random guess", help='baseline or gnn')
 
     parser.add_argument('--dimensions', type=int, default=128, help='Number of dimensions. Default is 128.')
 

@@ -69,8 +69,6 @@ class GNN(torch.nn.Module):
         x = self.conv3(x, edge_index)
         x = self.conv4(x, edge_index)
         return x
-# Our final classifier applies the dot-product between source and destination
-# node embeddings to derive edge-level predictions:
 class Classifier(torch.nn.Module):
     def forward(self, x_user, x_movie, edge_label_index):
         # Convert node embeddings to edge-level representations:
@@ -79,17 +77,13 @@ class Classifier(torch.nn.Module):
         # Apply dot-product to get a prediction per supervision edge:
         return (edge_feat_user * edge_feat_movie).sum(dim=-1)
 
-class Model(torch.nn.Module):
+class GNNModel(torch.nn.Module):
     def __init__(self, hidden_channels, data = None):
         super().__init__()
-        # Since the dataset does not come with rich features, we also learn two
-        # embedding matrices for users and movies:
         self.movie_lin = torch.nn.Linear(768, hidden_channels)
         self.user_emb = torch.nn.Embedding(data["mq"].num_nodes, hidden_channels)
         self.movie_emb = torch.nn.Embedding(data["sq"].num_nodes, hidden_channels)
-        # Instantiate homogeneous GNN:
         self.gnn = GNN(hidden_channels)
-        # Convert GNN model into a heterogeneous variant:
         self.gnn = to_hetero(self.gnn, metadata=data.metadata())
         self.classifier = Classifier()
     def forward(self, data: HeteroData):
@@ -97,8 +91,6 @@ class Model(torch.nn.Module):
           "mq": self.user_emb(data["mq"].node_id),
           "sq": self.movie_lin(data["sq"].x) + self.movie_emb(data["sq"].node_id),
         } 
-        # `x_dict` holds feature matrices of all node types
-        # `edge_index_dict` holds all edge indices of all edge types
         x_dict = self.gnn(x_dict, data.edge_index_dict)
         pred = self.classifier(
             x_dict["mq"],
@@ -106,3 +98,8 @@ class Model(torch.nn.Module):
             data["mq","queries","sq"].edge_label_index,
         )
         return pred
+    
+
+class MLP(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
