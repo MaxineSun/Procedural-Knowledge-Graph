@@ -39,29 +39,6 @@ class Data_Process:
         # fp.close()
 
         # # """
-        # # without entity resolution
-        
-        # # for mq_ind, item in tqdm(enumerate(json_list)):
-        # #     try:
-        # #         sq_x
-        # #         sq_x = np.append(
-        # #             sq_x,
-        # #             model.module.encode(
-        # #                 item["sub_questions"][0], show_progress_bar=False
-        # #             ),
-        # #             axis=0,
-        # #         )
-        # #     except NameError:
-        # #         sq_x = model.module.encode(
-        # #             item["sub_questions"][0], show_progress_bar=False
-        # #         )
-        # #     num_sq = len(item["sub_questions"][0])
-        # #     edge_mq_side.extend([mq_ind] * num_sq)
-        # #     edge_sq_side.extend(list(range(sq_ind, sq_ind + num_sq)))
-        # #     sq_ind += num_sq
-        # # """
-
-        # # """
         # # use entity resolution with dbscan density = 0.6
         # # """
         # sq_hash = {}

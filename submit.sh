@@ -10,7 +10,4 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --ntasks=1
 
-module load miniconda3
-source activate PKG
-
 python main.py

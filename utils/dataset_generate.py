@@ -2,7 +2,7 @@ import torch
 import pickle
 import numpy as np
 import os.path as osp
-from torch_geometric.data import Dataset, Data
+from torch_geometric.data import Dataset, Data, DataLoader
 
 
 class PKG_Dataset(Dataset):
@@ -15,7 +15,7 @@ class PKG_Dataset(Dataset):
 
     @property
     def processed_file_names(self):
-        return ["dataset_light.pt"]
+        return ["dataset8.pt"]
 
     def download(self):
         pass
@@ -24,7 +24,6 @@ class PKG_Dataset(Dataset):
         mask = torch.zeros(size, dtype=torch.bool)
         mask[index] = 1
         return mask
-
 
     def random_splits(self, size, train_len, val_len, seed=42):
         index = [i for i in range(0, size)]
@@ -45,7 +44,7 @@ class PKG_Dataset(Dataset):
         with open("../scratch/data/x", "rb") as fp:
             x = pickle.load(fp)
         fp.close()
-        with open("../scratch/data/ed", "rb") as fp:
+        with open("../scratch/data/edge_list", "rb") as fp:
             edge_list = pickle.load(fp)
         fp.close()
         with open("../scratch/data/y", "rb") as fp:
@@ -76,6 +75,6 @@ class PKG_Dataset(Dataset):
     def len(self):
         return len(self.processed_file_names)
 
-    def get(self):
-        data = torch.load(osp.join(self.processed_dir, "dataset_light.pt"))
+    def get(self, name = "dataset8.pt"):
+        data = torch.load(osp.join(self.processed_dir, name))
         return data

@@ -6,12 +6,23 @@ import numpy as np
 import argparse
 import utils.parse_args as pa
 
+def calculate_f1_score(actual_labels, predicted_labels):
+    true_positive = np.sum(np.logical_and(actual_labels == 1, predicted_labels == 1))
+    false_positive = np.sum(np.logical_and(actual_labels == 0, predicted_labels == 1))
+    false_negative = np.sum(np.logical_and(actual_labels == 1, predicted_labels == 0))
+
+    precision = true_positive / (true_positive + false_positive)
+    recall = true_positive / (true_positive + false_negative)
+    f1_score = 2 * (precision * recall) / (precision + recall)
+
+    return f1_score
+
 def train(args):
-    with open("../scratch/data/train_loader8", "rb") as fp:
+    with open("../scratch/data/train_loaderI", "rb") as fp:
         train_loader = pickle.load(fp)
     fp.close()
 
-    with open("../scratch/data/val_loader8", "rb") as fp:
+    with open("../scratch/data/val_loaderI", "rb") as fp:
         val_loader = pickle.load(fp)
     fp.close()
 
@@ -45,7 +56,9 @@ def train(args):
         ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
         pred = np.where(pred > 0, 1, 0)
         accu = sum(ground_truth==pred)/len(pred)
+        f1 = calculate_f1_score(pred, ground_truth)
         print(f"accu: {accu:.4f}")
+        print(f"F1: {f1:.4f}")
 
     if args.train_model == "random guess":
         preds = np.array([])
@@ -56,7 +69,9 @@ def train(args):
             ground_truths.append(sampled_data["mq","queries","sq"].edge_label)
         ground_truth = torch.cat(ground_truths, dim=0).numpy()
         accu = np.sum(ground_truth==preds)/len(preds)
+        f1 = calculate_f1_score(preds, ground_truth)
         print(f"accu: {accu:.4f}")
+        print(f"F1: {f1:.4f}")
     
     if args.train_model == "MLP":
         model = MLP(hidden_channels=64, data=train_loader.data)
@@ -88,8 +103,9 @@ def train(args):
         ground_truth = torch.cat(ground_truths, dim=0).cpu().numpy()
         pred = np.where(pred > 0, 1, 0)
         accu = sum(ground_truth==pred)/len(pred)
+        f1 = calculate_f1_score(pred, ground_truth)
         print(f"accu: {accu:.4f}")
-
+        print(f"F1: {f1:.4f}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

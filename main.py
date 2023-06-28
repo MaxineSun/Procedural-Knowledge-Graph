@@ -1,7 +1,8 @@
 import utils.parse_args as pa
 # import utils.sq_dbscan as sqer
-import utils.json2heterII as j2d
+import utils.pre_data4sort as pd4s
 # import utils.sq_clustering as sqer
+import utils.json2heter as jh
 
 from torchmetrics import RetrievalHitRate
 from gensim.models import Word2Vec
@@ -16,7 +17,7 @@ def main(args):
     # process = sqer.GPT_Val_Process()
     # process.gpt_val()
 
-    process = j2d.Data_Process()
+    process = pd4s.Data_Process()
     process.json2dataset(args.jsonpath)
     # with open("../scratch/data/processed/dataset", "wb") as fp:
     #     pickle.dump(dataset, fp)
