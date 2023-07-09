@@ -1,4 +1,6 @@
 from models import GNNModel, MLP, GCNet
+import os
+import glob
 import torch
 import pickle
 import torch.nn.functional as F
@@ -6,6 +8,7 @@ import numpy as np
 import argparse
 import utils.parse_args as pa
 import utils.dataset_generate as DG
+from torch_geometric.loader import DataLoader
 
 
 def calculate_f1_score(actual_labels, predicted_labels):
@@ -17,48 +20,48 @@ def calculate_f1_score(actual_labels, predicted_labels):
     f1_score = 2 * (precision * recall) / (precision + recall)
     return f1_score
 
-def train(model, optimizer, data):
-    model.train()
-    optimizer.zero_grad()
-    out = model(data.x, data.edge_index)[data.train_mask]
-    out = torch.flatten(out)
-    gt = F.one_hot(data.y[data.train_mask], num_classes = 11)
-    gt = torch.flatten(gt)
-    loss = F.nll_loss(out, gt)
-    loss.backward()
-    optimizer.step()
-    del out
-
-def test(model, data):
-    model.eval()
-    logits, accs, losses, preds = model(data.x, data.edge_index), [], [], []
-    for _, mask in data('train_mask', 'val_mask', 'test_mask'):
-        pred = logits[mask].max(1)[1]
-        acc = pred.eq(data.y[mask]).sum().item() / mask.sum().item()
-        loss = F.nll_loss(model(data.x, data.edge_index)[mask], data.y[mask])
-        preds.append(pred.detach().cpu())
-        accs.append(acc)
-        losses.append(loss.detach().cpu())
-    return accs, preds, losses
-
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = GCNet(-1, 64, 11)
-    dataset = DG.PKG_Dataset("../scratch/data/graph")
-    data = dataset.get()
-    
-    data = data.to(device)
+    model = GCNet(-1, 128, 11)
+    dataset = []
+    for i in range(24443):
+        with open(f"../scratch/data/subgraphs/g{str(i).zfill(5) }", "rb") as fp:
+            subgraph = pickle.load(fp)
+        fp.close()
+        dataset.append(subgraph)
+    datalength = len(dataset)
+    train_len = int(0.6*datalength)
+    val_len = int(0.2*datalength)
+    train_dataset = dataset[:train_len]
+    val_dataset = dataset[train_len:train_len+val_len]
+    test_dataset = dataset[train_len+val_len:]
+    train_dataloader = DataLoader(train_dataset, batch_size=20, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=20, shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=20, shuffle=True)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    best_val_acc = test_acc = 0
-    for epoch in range(1, 2):
-        train(model, optimizer, data)
-        [train_acc, val_acc, tmp_test_acc], preds, [train_loss, val_loss, tmp_test_loss] = test(model, data)
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            test_acc = tmp_test_acc
-        log = 'Epoch: {:03d}, Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-        print(log.format(epoch, train_acc, best_val_acc, test_acc))
+    
+    for epoch in range(100):
+        model.train()
+        for ind, batch in enumerate(train_dataloader):
+            batch = batch.to(device)
+            out = model(batch.x, batch.edge_index)
+            out = torch.flatten(out)
+            gt = F.one_hot(batch.y, num_classes = 11)
+            gt = torch.flatten(gt)
+            optimizer.zero_grad()
+            loss = F.nll_loss(out, gt)
+            loss.backward()
+            optimizer.step()
+            del out
+        model.eval()
+        val_accu = []
+        for ind, batch in enumerate(val_dataloader):
+            batch = batch.to(device)
+            out = model(batch.x, batch.edge_index)
+            val_accu.extend(torch.max(out, dim=1)[1] == batch.y)
+        accu = sum(val_accu) / len(val_accu)
+        print(accu)
 
 
 if __name__ == '__main__':

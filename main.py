@@ -12,20 +12,9 @@ import pickle
 
 
 def main(args):
-    # process = sqer.DBScan_Process()
-    # process.Clustering(args.density)
-    # process = sqer.GPT_Val_Process()
-    # process.gpt_val()
 
     process = pd4s.Data_Process()
     process.json2dataset(args.jsonpath)
-    # with open("../scratch/data/processed/dataset", "wb") as fp:
-    #     pickle.dump(dataset, fp)
-    # fp.close()
-
-    # with open("../scratch/data/dataset", "rb") as fp:
-    #     dataset = pickle.load(fp)
-    # fp.close()
 
 
 if __name__ == "__main__":

@@ -2,7 +2,8 @@ import torch
 import pickle
 import numpy as np
 import os.path as osp
-from torch_geometric.data import Dataset, Data, DataLoader
+from torch_geometric.data import Dataset, Data
+from torch_geometric.loader import DataLoader
 
 
 class PKG_Dataset(Dataset):
@@ -41,13 +42,13 @@ class PKG_Dataset(Dataset):
         return train_mask, val_mask, test_mask
 
     def process(self):
-        with open("../scratch/data/x", "rb") as fp:
+        with open("../scratch/data/graph_full/x", "rb") as fp:
             x = pickle.load(fp)
         fp.close()
-        with open("../scratch/data/edge_list", "rb") as fp:
+        with open("../scratch/data/graph_full/edge_list", "rb") as fp:
             edge_list = pickle.load(fp)
         fp.close()
-        with open("../scratch/data/y", "rb") as fp:
+        with open("../scratch/data/graph_full/y", "rb") as fp:
             y = pickle.load(fp)
         fp.close()
 
@@ -75,6 +76,26 @@ class PKG_Dataset(Dataset):
     def len(self):
         return len(self.processed_file_names)
 
-    def get(self, name = "dataset8.pt"):
-        data = torch.load(osp.join(self.processed_dir, name))
-        return data
+    def get(self):
+        with open("../scratch/data/graph_full/x", "rb") as fp:
+            x = pickle.load(fp)
+        fp.close()
+        with open("../scratch/data/graph_full/edge_list", "rb") as fp:
+            edge_list = pickle.load(fp)
+        fp.close()
+        with open("../scratch/data/graph_full/y", "rb") as fp:
+            y = pickle.load(fp)
+        fp.close()
+        graph = Data(
+            x=torch.from_numpy(x),
+            edge_index=torch.from_numpy(edge_list),
+            y=torch.from_numpy(y),
+        )
+        # train_len = int(round(0.6 * len(graph.y)))
+        # val_len = int(round(0.2 * len(graph.y)))
+        # train_mask, val_mask, test_mask = self.random_splits(len(graph.y), train_len, val_len)
+
+        # graph.train_mask = torch.tensor(train_mask, dtype=torch.bool)
+        # graph.val_mask = torch.tensor(val_mask, dtype=torch.bool)
+        # graph.test_mask = torch.tensor(test_mask, dtype=torch.bool)
+        return graph

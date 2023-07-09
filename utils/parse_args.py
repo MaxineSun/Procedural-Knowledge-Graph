@@ -37,14 +37,15 @@ def parse_args():
 
     parser.add_argument('--q', type=float, default=0.3, help='Inout hyperparameter. Default is 0.3.')
 
-    parser.add_argument('--weighted', dest='weighted', action='store_true',
-                        help='Boolean specifying (un)weighted. Default is unweighted.') 
+    parser.add_argument('--weighted', dest='weighted', action='store_true', help='Boolean specifying (un)weighted. Default is unweighted.') 
     parser.add_argument('--unweighted', dest='unweighted', action='store_false')
     parser.set_defaults(weighted=True)
 
-    parser.add_argument('--directed', dest='directed', action='store_true',
-                        help='Graph is (un)directed. Default is undirected.')
+    parser.add_argument('--directed', dest='directed', action='store_true', help='Graph is (un)directed. Default is undirected.')
     parser.add_argument('--undirected', dest='undirected', action='store_false')
+
+    parser.add_argument('--nsg_batch_size', type=int, default=32, help='batch size of next sentence generation model, default is 32.')
+    parser.add_argument('--learning_rate_nsg', type=float, default=0.001, help='learning rate of next sentence generation model, default is 0.001.')
     parser.set_defaults(directed=False)
 
     return parser.parse_args()
