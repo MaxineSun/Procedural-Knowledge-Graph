@@ -1,4 +1,4 @@
-from models import GNNModel, MLP, GCNet
+from models import GNNModel, MLP, GCNet, APPNPNet
 import os
 import glob
 import torch
@@ -22,9 +22,9 @@ def calculate_f1_score(actual_labels, predicted_labels):
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = GCNet(-1, 128, 11)
+    model = APPNPNet(768, 11, 64)
     dataset = []
-    for i in range(24443):
+    for i in range(33773):
         with open(f"../scratch/data/subgraphs/g{str(i).zfill(5) }", "rb") as fp:
             subgraph = pickle.load(fp)
         fp.close()
@@ -41,7 +41,7 @@ def main(args):
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     
-    for epoch in range(100):
+    for epoch in range(50):
         model.train()
         for ind, batch in enumerate(train_dataloader):
             batch = batch.to(device)
@@ -54,7 +54,6 @@ def main(args):
             loss.backward()
             optimizer.step()
             del out
-        model.eval()
         val_accu = []
         for ind, batch in enumerate(val_dataloader):
             batch = batch.to(device)
