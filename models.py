@@ -11,7 +11,12 @@ from torch_geometric.nn import (
     to_hetero,
 )
 import torch.nn.functional as F
+import torch.nn.init as init
+import utils.parse_args as pa
+from transformers import AutoModel
 from torch_geometric.data import HeteroData
+from sentence_transformers import SentenceTransformer
+from utils import diffsort, functional
 
 
 class GCNet(nn.Module):
@@ -134,3 +139,39 @@ class MLP(torch.nn.Module):
             data["mq", "queries", "sq"].edge_label_index,
         )
         return pred
+
+
+class wikiHowNet(nn.Module):
+    def __init__(self):
+        super(wikiHowNet, self).__init__()
+        self.fc1 = nn.Linear(384, 256)
+        init.normal_(self.fc1.weight, mean=1.0, std=0.30)
+        self.fc2 = nn.Linear(256, 128)
+        init.normal_(self.fc2.weight, mean=1.0, std=0.30)
+        self.fc3 = nn.Linear(128, 1)
+        init.normal_(self.fc2.weight, mean=1.0, std=0.30)
+        self.act1 = torch.nn.LeakyReLU()
+        self.act2 = torch.nn.LeakyReLU()
+        self.encode_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+
+    def forward(self, x):
+        args = pa.parse_args()
+        encode_shuffled_sq = self.encode_model(**x)
+        sq_shuffled_emb = functional.mean_pooling(encode_shuffled_sq, x['attention_mask'])
+        len_sq = len(sq_shuffled_emb)
+        sq_shuffled_emb = self.fc1(sq_shuffled_emb)
+        sq_shuffled_emb = self.act1(sq_shuffled_emb)
+        sq_shuffled_emb = self.fc2(sq_shuffled_emb)
+        sq_shuffled_emb = self.act2(sq_shuffled_emb)
+        shuffle_scalars = self.fc3(sq_shuffled_emb)
+        shuffle_scalars = shuffle_scalars.view(1, -1)
+        sorter = diffsort.DiffSortNet(
+            sorting_network_type='odd_even',
+            size=len_sq,
+            device=args.device,
+            steepness=args.steepness,
+            art_lambda=args.art_lambda,
+        )
+        _, perm_prediction = sorter(shuffle_scalars)
+        perm_prediction = perm_prediction.squeeze(0)
+        return perm_prediction

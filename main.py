@@ -1,20 +1,13 @@
 import utils.parse_args as pa
-# import utils.sq_dbscan as sqer
-import utils.pre_data4sort as pd4s
-# import utils.sq_clustering as sqer
-import utils.json2heter as jh
-
-from torchmetrics import RetrievalHitRate
-from gensim.models import Word2Vec
-from sklearn.cluster import KMeans
+import utils.pre_sq_unfolded as psu
+import utils.rw_score as rs
+import utils.sq_ER_GPT as sq
 import pickle
-# import utils.train 
 
 
 def main(args):
-
-    process = pd4s.Data_Process()
-    process.json2dataset(args.jsonpath)
+    p = psu.Data_Process()
+    p.json2dataset(args)
 
 
 if __name__ == "__main__":

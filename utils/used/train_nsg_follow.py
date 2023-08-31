@@ -22,7 +22,7 @@ def train(args):
     #     test_dataloader_follow = pickle.load(fp)
     # fp.close()
 
-    optimizer = optim.Adam(model_follow.parameters(), lr=args.learning_rate_nsg)
+    optimizer = optim.Adam(model_follow.parameters(), lr=args.learning_rate_nsg, weight_decay=1e-5)
     criterion = torch.nn.BCELoss()
     model_follow.train()
     for epoch in range(300):
@@ -30,8 +30,8 @@ def train(args):
         for item in train_dataloader_follow:
             encoded_inputs = tokenizer(list(item[0]), list(item[1]), return_tensors='pt', padding=True, truncation=True).to(device)
             outputs = torch.sigmoid(model_follow(**encoded_inputs).logits)
-            item[2] = item[2].to(device)
-            loss = criterion(outputs.float()[:,0], item[2].float()) + criterion(outputs.float()[:,1], 1 - item[2].float())
+            item[2] = item[2].float().to(device)
+            loss = criterion(outputs[:,0], item[2]) + criterion(outputs[:,1], 1 - item[2])
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

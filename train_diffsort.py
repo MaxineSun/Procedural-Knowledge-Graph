@@ -1,5 +1,4 @@
 import pickle
-import copy
 import utils.parse_args as pa
 import torch
 import torch.optim as optim
@@ -7,65 +6,74 @@ import torch.nn as nn
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 from models import wikiHowNet
-from utils import diffsort
+from utils import diffsort, functional
 
-
-def sorter(size):
-    sorter = diffsort.DiffSortNet(
-        sorting_network_type=args.method,
-        size=size,
-        device=args.device,
-        steepness=args.steepness,
-        art_lambda=args.art_lambda,
-    )
-    return sorter
 
 def train(args):
+    with open("../scratch/data/diff_sort/sq_set_shuffled", "rb") as fp:
+        sq_set_shuffled = pickle.load(fp)
+    fp.close()
+    with open("../scratch/data/diff_sort/target_idx", "rb") as fp:
+        target_idx_set = pickle.load(fp)
+    fp.close()
+    sq_set_shuffled_val = sq_set_shuffled[30_720:40_960]
+    target_idx_set_val = target_idx_set[30_720:40_960]
+    sq_set_shuffled = sq_set_shuffled[:30_720]
+    target_idx_set = target_idx_set[:30_720]
+    
     model = wikiHowNet()
     model = model.to(args.device)
-    # model_t = wikiHowNet()
-    # model_t = model.to(args.device)
-
-    optim = torch.optim.Adam(model.parameters(), lr=10**(-4))
-    criterion = torch.nn.MSELoss()
-    model.train()
-
-    with open("../scratch/data/diff_sort/train_dataloader", "rb") as fp:
-        train_dataloader = pickle.load(fp)
-    fp.close()
-
-    # with open("../scratch/data/diff_sort/val_dataloader", "rb") as fp:
-    #     val_dataloader = pickle.load(fp)
-    # fp.close()
-
-    # with open("../scratch/data/diff_sort/test_dataloader", "rb") as fp:
-    #     test_dataloader = pickle.load(fp)
-    # fp.close()
-
-    sorter = diffsort.DiffSortNet(
-        sorting_network_type='bitonic',
-        size=args.num_compare,
-        device=args.device,
-        steepness=args.steepness,
-        art_lambda=args.art_lambda,
-    )
-    num_batches = len(train_dataloader)
-    for epoch in range(3):
+    optim = torch.optim.Adam([{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
+                              {'params':model.fc1.parameters(), 'lr':args.lr_MLP}, 
+                              {'params':model.fc2.parameters(), 'lr':args.lr_MLP}, 
+                              {'params':model.fc3.parameters(), 'lr':args.lr_MLP}, 
+                              {'params':model.act1.parameters(), 'lr':args.lr_MLP}, 
+                              {'params':model.act2.parameters(), 'lr':args.lr_MLP}])
+    
+    patience = 7
+    best_val_loss = 0.0
+    current_patience = 0
+    for epoch in range(100):
         model.train()
-        for b_ind, batch in tqdm(enumerate(train_dataloader)):
-            if b_ind < num_batches - 1:
-                batch[0] = batch[0].to(args.device)
-                batch[1] = batch[1].to(args.device)
-                shuffle_scalars = model(batch[0]).squeeze(2)
-                shuffle_scalars, _ = sorter(shuffle_scalars)
-                target_scalars = model(batch[1]).squeeze(2)
-                # target_scalars = torch.tensor([[0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0]]*32).to(args.device)
-                loss = criterion(shuffle_scalars, target_scalars)
-                print(loss)
-                optim.zero_grad()
-                loss.backward()
+        loss_list = []
+        loss_accu = []
+        for b_ind, (shuffle_sq, target_idx) in enumerate(zip(sq_set_shuffled, target_idx_set)):
+            shuffle_sq = shuffle_sq.to(args.device)
+            target_idx = target_idx.to(args.device)
+            perm_prediction = model(shuffle_sq)
+            loss = torch.nn.BCELoss()(perm_prediction, target_idx)
+            loss_list.append(loss)
+            loss = loss / args.NUM_ACCUMULATION_STEPS
+            loss.backward()
+            if ((b_ind + 1) % args.NUM_ACCUMULATION_STEPS == 0) or (b_ind + 1 == len(sq_set_shuffled)):
                 optim.step()
+                optim.zero_grad()
+                print("Loss in epoch", epoch, "batch", (b_ind + 1) // args.NUM_ACCUMULATION_STEPS, "is ", sum(loss_list)/len(loss_list))
+                loss_accu.append(sum(loss_list)/len(loss_list))
+                loss_list = []
+        print("Loss in epoch", epoch, " is ", sum(loss_accu)/len(loss_accu))
+        
+        
+        model.eval()
+        with torch.no_grad():
+            loss_list = []
+            for b_ind, (shuffle_sq, target_idx) in enumerate(zip(sq_set_shuffled_val, target_idx_set_val)):
+                shuffle_sq = shuffle_sq.to(args.device)
+                target_idx = target_idx.to(args.device)
+                perm_prediction = model(shuffle_sq)
+                loss = torch.nn.BCELoss()(perm_prediction, target_idx)
+                loss_list.append(loss)
+            val_loss_mean = sum(loss_list)/len(loss_list)
+            print("Val loss in epoch", epoch, " is ", val_loss_mean)
 
+        if val_loss_mean < best_val_loss:
+            best_val_loss = val_loss_mean
+            current_patience = 0
+        else:
+            current_patience += 1
+            if current_patience >= patience:
+                print("Early stopping triggered!")
+                break
 
 if __name__ == "__main__":
     args = pa.parse_args()

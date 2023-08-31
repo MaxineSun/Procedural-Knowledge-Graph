@@ -22,35 +22,40 @@ def calculate_f1_score(actual_labels, predicted_labels):
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = APPNPNet(768, 11, 64)
+    model = GCNet(-1, 64, 11)
     dataset = []
-    for i in range(33773):
-        with open(f"../scratch/data/subgraphs/g{str(i).zfill(5) }", "rb") as fp:
-            subgraph = pickle.load(fp)
-        fp.close()
-        dataset.append(subgraph)
+    # for i in range(32774):
+    #     with open(f"../scratch/data/subgraphs/g{str(i).zfill(5) }", "rb") as fp:
+    #         subgraph = pickle.load(fp)
+    #     fp.close()
+    #     dataset.append(subgraph)
+
+    with open("../scratch/data/subgraphs/dataset_isolated", "rb") as fp:
+        dataset = pickle.load(fp)
+    fp.close()
+
     datalength = len(dataset)
     train_len = int(0.6*datalength)
     val_len = int(0.2*datalength)
     train_dataset = dataset[:train_len]
     val_dataset = dataset[train_len:train_len+val_len]
-    test_dataset = dataset[train_len+val_len:]
+    # test_dataset = dataset[train_len+val_len:]
     train_dataloader = DataLoader(train_dataset, batch_size=20, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=20, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=20, shuffle=True)
+    # test_dataloader = DataLoader(test_dataset, batch_size=20, shuffle=True)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     
-    for epoch in range(50):
+    for epoch in range(100):
         model.train()
         for ind, batch in enumerate(train_dataloader):
             batch = batch.to(device)
             out = model(batch.x, batch.edge_index)
             out = torch.flatten(out)
-            gt = F.one_hot(batch.y, num_classes = 11)
+            gt = F.one_hot(batch.y, num_classes = 11).float()
             gt = torch.flatten(gt)
             optimizer.zero_grad()
-            loss = F.nll_loss(out, gt)
+            loss = F.binary_cross_entropy_with_logits(out, gt)
             loss.backward()
             optimizer.step()
             del out
