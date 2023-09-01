@@ -30,8 +30,8 @@ def train(args):
                               {'params':model.act1.parameters(), 'lr':args.lr_MLP}, 
                               {'params':model.act2.parameters(), 'lr':args.lr_MLP}])
     
-    patience = 7
-    best_val_loss = 0.0
+    patience = 15
+    best_val_loss = 1000.0
     current_patience = 0
     for epoch in range(100):
         model.train()
@@ -48,7 +48,7 @@ def train(args):
             if ((b_ind + 1) % args.NUM_ACCUMULATION_STEPS == 0) or (b_ind + 1 == len(sq_set_shuffled)):
                 optim.step()
                 optim.zero_grad()
-                print("Loss in epoch", epoch, "batch", (b_ind + 1) // args.NUM_ACCUMULATION_STEPS, "is ", sum(loss_list)/len(loss_list))
+                # print("Loss in epoch", epoch, "batch", (b_ind + 1) // args.NUM_ACCUMULATION_STEPS, "is ", sum(loss_list)/len(loss_list))
                 loss_accu.append(sum(loss_list)/len(loss_list))
                 loss_list = []
         print("Loss in epoch", epoch, " is ", sum(loss_accu)/len(loss_accu))
@@ -66,7 +66,7 @@ def train(args):
             val_loss_mean = sum(loss_list)/len(loss_list)
             print("Val loss in epoch", epoch, " is ", val_loss_mean)
 
-        if val_loss_mean < best_val_loss:
+        if val_loss_mean <= best_val_loss:
             best_val_loss = val_loss_mean
             current_patience = 0
         else:
