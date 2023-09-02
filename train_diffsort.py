@@ -24,13 +24,13 @@ def train(args):
     model = wikiHowNet()
     model = model.to(args.device)
     optim = torch.optim.Adam([{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
-                              {'params':model.fc1.parameters(), 'lr':args.lr_MLP}, 
-                              {'params':model.fc2.parameters(), 'lr':args.lr_MLP}, 
-                              {'params':model.fc3.parameters(), 'lr':args.lr_MLP}, 
-                              {'params':model.act1.parameters(), 'lr':args.lr_MLP}, 
-                              {'params':model.act2.parameters(), 'lr':args.lr_MLP}])
+                              {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
+                              {'params':model.fc2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
+                              {'params':model.fc3.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
+                              {'params':model.act1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
+                              {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
     
-    patience = 15
+    patience = 5
     best_val_loss = 1000.0
     current_patience = 0
     for epoch in range(100):
