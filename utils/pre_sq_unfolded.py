@@ -18,8 +18,8 @@ class SentenceDataset(Dataset):
         return len(self.target_idx_set)
 
     def __getitem__(self, idx):
-        
-        return self.shuffled_embs[idx][0], self.shuffled_embs[idx][1], self.shuffled_embs[idx][2], self.target_idx_set[idx]
+        encoded_sqs = {'input_ids':self.shuffled_embs[idx][0], 'token_type_ids': self.shuffled_embs[idx][1], 'attention_mask':self.shuffled_embs[idx][2]}
+        return encoded_sqs, self.target_idx_set[idx]
         # return self.shuffled_embs[idx], self.target_idx_set[idx]
     
 
@@ -48,14 +48,11 @@ class Data_Process:
         # print(bool_list)
         sq_set = [sq_set[i] for i in range(len(sq_set)) if bool_list[i]]
         # sq_set = sq_set[functional.choose_batch_idx(length_sq)]
-        count = 0
         # print(functional.find_min_continuous_length([len(item) for item in sq_set]))
         for sq in sq_set:
             encoded_sqs = tokenizer(sq, padding=True, truncation=True, max_length=128, return_tensors='pt')
             # sq_set.append(encoded_sqs)
-            if count == 0:
-                print(encoded_sqs)
-            
+
             shuffle_idx = list(range(len(encoded_sqs['input_ids'])))
             np.random.shuffle(shuffle_idx)
             encoded_sqs['input_ids']=encoded_sqs['input_ids'][shuffle_idx]
