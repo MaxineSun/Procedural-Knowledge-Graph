@@ -18,7 +18,8 @@ class SentenceDataset(Dataset):
         return len(self.target_idx_set)
 
     def __getitem__(self, idx):
-        # encoded_sqs = {'input_ids':self.shuffled_embs[idx][0], 'token_type_ids': self.shuffled_embs[idx][1], 'attention_mask':self.shuffled_embs[idx][2]}
+        print(self.shuffled_embs[idx])
+        # encoded_sqs = [{'input_ids':item['input_ids'], 'token_type_ids': item['token_type_ids'], 'attention_mask':item['attention_mask']} for item in self.shuffled_embs[idx]]
         # return encoded_sqs, self.target_idx_set[idx]
         return self.shuffled_embs[idx], self.target_idx_set[idx]
     
@@ -36,7 +37,7 @@ class Data_Process:
         sq_set_shuffled = []
         sq_set = []
         target_idx = []
-        for item in tqdm(json_list[:250]):
+        for item in tqdm(json_list[:500]):
             sq = []
             for sq_item in item["sub_questions"]:
                 sq+=sq_item
@@ -87,7 +88,6 @@ class Data_Process:
         # with open("../scratch/data/diff_sort/target_idx", "rb") as fp:
         #     target_idx = pickle.load(fp)
         # fp.close()
-
 
 
         
