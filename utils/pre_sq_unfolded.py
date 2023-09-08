@@ -18,9 +18,9 @@ class SentenceDataset(Dataset):
         return len(self.target_idx_set)
 
     def __getitem__(self, idx):
-        encoded_sqs = {'input_ids':self.shuffled_embs[idx][0], 'token_type_ids': self.shuffled_embs[idx][1], 'attention_mask':self.shuffled_embs[idx][2]}
-        return encoded_sqs, self.target_idx_set[idx]
-        # return self.shuffled_embs[idx], self.target_idx_set[idx]
+        # encoded_sqs = {'input_ids':self.shuffled_embs[idx][0], 'token_type_ids': self.shuffled_embs[idx][1], 'attention_mask':self.shuffled_embs[idx][2]}
+        # return encoded_sqs, self.target_idx_set[idx]
+        return self.shuffled_embs[idx], self.target_idx_set[idx]
     
 
 class Data_Process:
@@ -36,7 +36,7 @@ class Data_Process:
         sq_set_shuffled = []
         sq_set = []
         target_idx = []
-        for item in tqdm(json_list[:500]):
+        for item in tqdm(json_list[:250]):
             sq = []
             for sq_item in item["sub_questions"]:
                 sq+=sq_item
@@ -95,13 +95,12 @@ class Data_Process:
         dataset_size = len(target_idx)
         train_size = int(0.8 * dataset_size / 16) * 16
         val_size = int(0.1 * dataset_size/ 16) * 16
-
         dataset = SentenceDataset(sq_set_shuffled, target_idx)
         # train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, val_size, test_size])
         train_dataset = dataset[:train_size]
         val_dataset = dataset[train_size:train_size + val_size]
         test_dataset = dataset[train_size + val_size:]
-
+        print(val_dataset)
         train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=False)
         val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=False)
         test_dataloader = DataLoader(test_dataset, batch_size=16, shuffle=False)
