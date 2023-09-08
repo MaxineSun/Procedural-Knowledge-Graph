@@ -23,9 +23,14 @@ def train(args):
     sq_set_shuffled = sq_set_shuffled[:30_720]
     target_idx_set = target_idx_set[:30_720]
     
+    # sq_set_shuffled_val = sq_set_shuffled[3072:4096]
+    # target_idx_set_val = target_idx_set[3072:4096]
+    # sq_set_shuffled = sq_set_shuffled[:3072]
+    # target_idx_set = target_idx_set[:3072]
+    
     model = wikiHowNet()
     model = model.to(args.device)
-    optim = torch.optim.Adam([{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
+    optim = torch.optim.Adam([#{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
                               {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
                               {'params':model.fc2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
                             #   {'params':model.fc3.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
