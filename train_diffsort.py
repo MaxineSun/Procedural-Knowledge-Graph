@@ -12,11 +12,11 @@ from scipy.stats import wasserstein_distance
 
 
 def train(args):
-    with open("../scratch/data/diff_sort/train_dataloader", "rb") as fp:
-        train_dataloader = pickle.load(fp)
+    with open("../scratch/data/diff_sort/sq_set_shuffled", "rb") as fp:
+        sq_set_shuffled = pickle.load(fp)
     fp.close()
-    with open("../scratch/data/diff_sort/val_dataloader", "rb") as fp:
-        val_dataloader = pickle.load(fp)
+    with open("../scratch/data/diff_sort/target_idx", "rb") as fp:
+        target_idx_set = pickle.load(fp)
     fp.close()
     sq_set_shuffled_val = sq_set_shuffled[30_720:40_960]
     target_idx_set_val = target_idx_set[30_720:40_960]
