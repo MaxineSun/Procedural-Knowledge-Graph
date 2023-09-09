@@ -9,7 +9,7 @@ import pickle
 
 def main(args):
     p = sq.DBScan_Process()
-    p.Clustering(0.6)
+    p.Clustering(0.8)
 
 
 if __name__ == "__main__":
