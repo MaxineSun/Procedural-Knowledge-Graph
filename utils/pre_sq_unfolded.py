@@ -22,9 +22,13 @@ class SentenceDataset(Dataset):
     
     
 def collate_fn_len_sort(batch):
-    shuffled_embs = [item[0] for item in batch]
-    target_idx_set = [item[1] for item in batch]
-    return shuffled_embs, target_idx_set
+    print(batch)
+    # shuffled_embs, target_idx_set = batch
+    # shuffled_embs = torch.stack(shuffled_embs, dim=0)
+    # target_idx_set = torch.stack(target_idx_set, dim=0)
+    # shuffled_embs = [item[0] for item in batch]
+    # target_idx_set = [item[1] for item in batch]
+    return #shuffled_embs, target_idx_set
 
 
 class Data_Process:
@@ -69,7 +73,7 @@ class Data_Process:
         train_dataset = dataset[:train_size]
         val_dataset = dataset[train_size:train_size + val_size]
         test_dataset = dataset[train_size + val_size:]
-        train_dataloader = DataLoader(train_dataset, batch_size=16, collate_fn=collate_fn_len_sort, shuffle=False) 
+        train_dataloader = DataLoader(train_dataset, batch_size=16, collate_fn=collate_fn_len_sort, shuffle=False) #  collate_fn=collate_fn_len_sort,
         val_dataloader = DataLoader(val_dataset, batch_size=16, collate_fn=collate_fn_len_sort, shuffle=False)
         test_dataloader = DataLoader(test_dataset, batch_size=16, collate_fn=collate_fn_len_sort, shuffle=False)
                 

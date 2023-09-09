@@ -184,3 +184,30 @@ def score_emd(walk):
     # print(walk_c)
     # print(sorted_walk_c)
     return wasserstein_distance(sorted_walk_c, walk_c, create_weight_matrix(walk_len))
+
+def find_min_continuous_length(nums):
+    if not nums:
+        return 0
+    min_length = float('inf')
+    current_length = 1
+    for i in range(1, len(nums)):
+        if nums[i] == nums[i - 1]:
+            current_length += 1
+        else:
+            min_length = min(min_length, current_length)
+            current_length = 1
+    min_length = min(min_length, current_length)
+    return min_length
+
+
+def choose_batch_idx(sq_len_list):
+    min_length = 0
+    idx = [False]*len(sq_len_list)
+    pt = 0
+    while pt < len(sq_len_list):
+        if pt+15<len(sq_len_list):
+            while sq_len_list[pt]==sq_len_list[pt+15]:
+                idx[pt:pt+16] = [True]*16
+                pt +=16
+        pt+=1
+    return idx

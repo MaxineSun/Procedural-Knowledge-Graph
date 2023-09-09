@@ -35,9 +35,12 @@ def train(args):
     # if args.score_type == "emd":
     #     score_function = functional.score_emd
     
-    print(len(train_dataloader))
-    # for batch in train_dataloader:
-    #     print(batch)
+    # print(len(train_dataloader))
+    count = 0
+    for batch in train_dataloader:
+        print(len(batch[0]))
+        count +=1
+    print(count)
     
     # for epoch in range(1):
     #     model.train()

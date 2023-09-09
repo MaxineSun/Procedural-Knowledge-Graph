@@ -14,25 +14,24 @@ class Data_Process:
     def __init__(self):
         self.mqlen = 0
 
-    def json2dataset(self, filepath):
-        # json_list = []
-        # with open(filepath, "r+") as f_in:
-        #     for json in jsonlines.Reader(f_in):
-        #         if len(json_list) < 8000:
-        #             json_list.append(json)
-        # model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
-        # model = nn.DataParallel(model)
-        # model = model.to("cuda")
-        # mq_raw = [item["main_question"] for item in json_list]
-        # mq_x = model.module.encode(mq_raw, show_progress_bar=True)
+    def json2dataset(self):
+        json_list = []
+        with open("../scratch/data/json_list", "rb") as fp:
+            json_list = pickle.load(fp)
+        fp.close()
+        model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+        model = nn.DataParallel(model)
+        model = model.to("cuda")
+        mq_raw = [item["main_question"] for item in json_list]
+        mq_x = model.module.encode(mq_raw, show_progress_bar=True)
         # with open("../scratch/data/mq_x8", "wb") as fp:
         #     pickle.dump(mq_x, fp)
         # fp.close()
 
-        # edge_mq_side = []
-        # edge_sq_side = []
-        # sq_cls_ind = 0
-        # sq_node_ind = 0
+        edge_mq_side = []
+        edge_sq_side = []
+        sq_cls_ind = 0
+        sq_node_ind = 0
 
         # with open("../scratch/data/sq_cls06", "rb") as fp:
         #     sq_cls = pickle.load(fp)
@@ -41,26 +40,26 @@ class Data_Process:
         # # """
         # # use entity resolution with dbscan density = 0.6
         # # """
-        # sq_hash = {}
-        # for mq_ind, item in tqdm(enumerate(json_list)):
-        #     for sq_item in item["sub_questions"][0]:
-        #         current_cls = np.where(sq_cls == sq_cls[sq_cls_ind])
-        #         if sq_cls_ind == current_cls[0][0]:
-        #             sq_emb = model.module.encode(sq_item)
-        #             sq_hash[sq_cls_ind] = sq_node_ind
-        #             sq_cls_ind += 1
-        #             try:
-        #                 sq_x
-        #                 sq_x = np.vstack((sq_x, sq_emb))
-        #             except NameError:
-        #                 sq_x = sq_emb
-        #             edge_mq_side.append(mq_ind)
-        #             edge_sq_side.append(sq_node_ind)
-        #             sq_node_ind += 1
-        #         else:
-        #             edge_mq_side.append(mq_ind)
-        #             edge_sq_side.append(sq_hash[current_cls[0][0]])
-        #             sq_cls_ind += 1
+        sq_hash = {}
+        for mq_ind, item in tqdm(enumerate(json_list)):
+            for sq_item in item["sub_questions"][0]:
+                current_cls = np.where(sq_cls == sq_cls[sq_cls_ind])
+                if sq_cls_ind == current_cls[0][0]:
+                    sq_emb = model.module.encode(sq_item)
+                    sq_hash[sq_cls_ind] = sq_node_ind
+                    sq_cls_ind += 1
+                    try:
+                        sq_x
+                        sq_x = np.vstack((sq_x, sq_emb))
+                    except NameError:
+                        sq_x = sq_emb
+                    edge_mq_side.append(mq_ind)
+                    edge_sq_side.append(sq_node_ind)
+                    sq_node_ind += 1
+                else:
+                    edge_mq_side.append(mq_ind)
+                    edge_sq_side.append(sq_hash[current_cls[0][0]])
+                    sq_cls_ind += 1
  
         # print(len(sq_x))
         # with open("../scratch/data/sq_x8", "wb") as fp:
@@ -75,28 +74,28 @@ class Data_Process:
         #     pickle.dump(edge_sq_side, fp)
         # fp.close()
 
-        with open("../scratch/data/mq_x", "rb") as fp:
-            mq_x = pickle.load(fp)
-        fp.close()
+        # with open("../scratch/data/mq_x", "rb") as fp:
+        #     mq_x = pickle.load(fp)
+        # fp.close()
 
-        print("mq data loaded")
+        # print("mq data loaded")
 
-        with open("../scratch/data/edge_mq_side", "rb") as fp:
-            edge_mq_side = pickle.load(fp)
-        fp.close()
-        print("ed data loaded")
-
-
-        with open("../scratch/data/edge_sq_side", "rb") as fp:
-            edge_sq_side = pickle.load(fp)
-        fp.close()
-        print("sq ed data loaded")
+        # with open("../scratch/data/edge_mq_side", "rb") as fp:
+        #     edge_mq_side = pickle.load(fp)
+        # fp.close()
+        # print("ed data loaded")
 
 
-        with open("../scratch/data/sq_x", "rb") as fp:
-            sq_x = pickle.load(fp)
-        fp.close()
-        print("sq data loaded")
+        # with open("../scratch/data/edge_sq_side", "rb") as fp:
+        #     edge_sq_side = pickle.load(fp)
+        # fp.close()
+        # print("sq ed data loaded")
+
+
+        # with open("../scratch/data/sq_x", "rb") as fp:
+        #     sq_x = pickle.load(fp)
+        # fp.close()
+        # print("sq data loaded")
 
 
         data = HeteroData()
