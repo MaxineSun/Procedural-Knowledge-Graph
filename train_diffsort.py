@@ -34,9 +34,10 @@ def train(args):
     #     score_function = functional.score_inversions
     # if args.score_type == "emd":
     #     score_function = functional.score_emd
-
-    for batch in train_dataloader:
-        print(batch)
+    
+    print(len(train_dataloader))
+    # for batch in train_dataloader:
+    #     print(batch)
     
     # for epoch in range(1):
     #     model.train()
