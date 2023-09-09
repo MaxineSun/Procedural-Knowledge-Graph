@@ -144,14 +144,14 @@ class MLP(torch.nn.Module):
 class wikiHowNet(nn.Module):
     def __init__(self):
         super(wikiHowNet, self).__init__()
-        self.fc1 = nn.Linear(384, 256)
+        self.fc1 = nn.Linear(384, 128)
         init.normal_(self.fc1.weight, mean=1.0, std=0.30)
-        self.fc2 = nn.Linear(256, 128)
+        self.fc2 = nn.Linear(128, 1)
         init.normal_(self.fc2.weight, mean=1.0, std=0.30)
-        self.fc3 = nn.Linear(128, 1)
-        init.normal_(self.fc2.weight, mean=1.0, std=0.30)
+        # self.fc3 = nn.Linear(128, 1)
+        # init.normal_(self.fc2.weight, mean=1.0, std=0.30)
         self.act1 = torch.nn.LeakyReLU()
-        self.act2 = torch.nn.LeakyReLU()
+        # self.act2 = torch.nn.LeakyReLU()
         self.encode_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
 
     def forward(self, x):
@@ -161,9 +161,9 @@ class wikiHowNet(nn.Module):
         len_sq = len(sq_shuffled_emb)
         sq_shuffled_emb = self.fc1(sq_shuffled_emb)
         sq_shuffled_emb = self.act1(sq_shuffled_emb)
-        sq_shuffled_emb = self.fc2(sq_shuffled_emb)
-        sq_shuffled_emb = self.act2(sq_shuffled_emb)
-        shuffle_scalars = self.fc3(sq_shuffled_emb)
+        shuffle_scalars = self.fc2(sq_shuffled_emb)
+        # sq_shuffled_emb = self.act2(sq_shuffled_emb)
+        # shuffle_scalars = self.fc3(sq_shuffled_emb)
         shuffle_scalars = shuffle_scalars.view(1, -1)
         sorter = diffsort.DiffSortNet(
             sorting_network_type='odd_even',
@@ -174,4 +174,4 @@ class wikiHowNet(nn.Module):
         )
         _, perm_prediction = sorter(shuffle_scalars)
         perm_prediction = perm_prediction.squeeze(0)
-        return perm_prediction
+        return shuffle_scalars, perm_prediction

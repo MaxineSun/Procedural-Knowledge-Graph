@@ -2,6 +2,8 @@ import torch
 from typing import List, Tuple
 import math
 import diffsort
+import numpy as np
+from scipy.stats import wasserstein_distance
 
 SORTING_NETWORK_TYPE = List[torch.tensor]
 
@@ -111,17 +113,6 @@ def sort(
     )
 
 
-def sorter(size):
-    sorter = diffsort.DiffSortNet(
-        sorting_network_type=args.method,
-        size=size,
-        device=args.device,
-        steepness=args.steepness,
-        art_lambda=args.art_lambda,
-    )
-    return sorter
-
-
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[0]
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -130,29 +121,66 @@ def mean_pooling(model_output, attention_mask):
     return sum_embeddings / sum_mask
 
 
-def find_min_continuous_length(nums):
-    if not nums:
-        return 0
-    min_length = float('inf')
-    current_length = 1
-    for i in range(1, len(nums)):
-        if nums[i] == nums[i - 1]:
-            current_length += 1
-        else:
-            min_length = min(min_length, current_length)
-            current_length = 1
-    min_length = min(min_length, current_length)
-    return min_length
+def is_sorted(walk):
+    result = True
+    for i in range(len(walk)-1):
+        if walk[i]>walk[i+1]:
+            result = False
+    return result
 
 
-def choose_batch_idx(sq_len_list):
-    min_length = 0
-    idx = [False]*len(sq_len_list)
-    pt = 0
-    while pt < len(sq_len_list):
-        if pt+15<len(sq_len_list):
-            while sq_len_list[pt]==sq_len_list[pt+15]:
-                idx[pt:pt+16] = [True]*16
-                pt +=16
-        pt+=1
-    return idx
+def score_inversions(walk):
+    score = 0.0
+    walk = walk.view(-1)
+    walk_len = len(walk)
+    if is_sorted(walk):
+        return 1.0
+    else:
+        # Unsortedp
+        score+=1.0
+    for i in range(walk_len):
+        for j in range(i + 1, walk_len):
+            # inversions
+            if walk[i] > walk[j]:
+                score += 1.0
+        # adjacent inversions
+        if i<walk_len-1:
+            if walk[i] > walk[i+1]:
+                score +=1.0
+    # insertion index
+    lengths = [1] * walk_len
+    for i in range(1, walk_len):
+        for j in range(i):
+            if walk[i] > walk[j]:
+                lengths[i] = max(lengths[i], lengths[j] + 1)
+    score += walk_len
+    score -= max(lengths)
+    norm = walk_len*walk_len/2.0 + 5.0*walk_len/2.0-2.0
+    return 1.0-(score/norm)
+
+def create_weight_matrix(l):
+    wm = np.zeros((l, l))
+    for i in range(l):
+        for j in range(l):
+            wm[i,j] = np.abs(i-j)
+    return wm
+
+def inv_create_weight_matrix(l):
+    wm = np.zeros((l, l))
+    for i in range(l):
+        for j in range(l):
+            wm[i,j] = np.abs(i-j)
+    wm = l - 1 - wm
+    return wm
+
+def score_emd(walk):
+    walk = walk.view(-1)
+    walk_len = len(walk)
+    sorted_walk, _ = torch.sort(walk)
+    walk_c = walk.cpu()
+    walk_c = walk_c.detach().numpy()
+    sorted_walk_c = sorted_walk.cpu()
+    sorted_walk_c = sorted_walk_c.detach().numpy()
+    # print(walk_c)
+    # print(sorted_walk_c)
+    return wasserstein_distance(sorted_walk_c, walk_c, create_weight_matrix(walk_len))
