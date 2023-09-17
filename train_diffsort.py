@@ -46,6 +46,8 @@ def train(args):
         score_function = functional.score_pesq
     if args.score_type == "pit":
         score_function = functional.score_pit
+    if args.score_type == "eed":
+        score_function = functional.score_eed
     
         
     for epoch in range(100):

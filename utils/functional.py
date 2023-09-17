@@ -206,9 +206,11 @@ def score_pit(walk):
     walk = walk.view(-1)
     walk_len = len(walk)
     sorted_walk, _ = torch.sort(walk)
+    walk = walk.view(1,-1,1)
+    sorted_walk = sorted_walk.view(1,-1,1)
     walk_c = walk.cpu()
     sorted_walk_c = sorted_walk.cpu()
-    metric = PermutationInvariantTraining(scale_invariant_signal_noise_ratio, mode='permutation-wise', eval_func="max")
+    metric = PermutationInvariantTraining(scale_invariant_signal_noise_ratio)
     score = metric(sorted_walk_c, walk_c)
     return score
 
