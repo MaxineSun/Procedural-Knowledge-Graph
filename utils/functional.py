@@ -4,6 +4,9 @@ import math
 import diffsort
 import numpy as np
 from scipy.stats import wasserstein_distance
+from torchmetrics.functional.audio import scale_invariant_signal_noise_ratio
+from torchmetrics.functional.audio.pesq import perceptual_evaluation_speech_quality
+from torchmetrics.audio import PermutationInvariantTraining
 
 SORTING_NETWORK_TYPE = List[torch.tensor]
 
@@ -181,6 +184,31 @@ def score_emd(walk):
     walk_c = walk_c.detach().numpy()
     sorted_walk_c = sorted_walk.cpu()
     sorted_walk_c = sorted_walk_c.detach().numpy()
-    # print(walk_c)
-    # print(sorted_walk_c)
     return wasserstein_distance(sorted_walk_c, walk_c, create_weight_matrix(walk_len))
+
+def score_si_snr(walk):
+    walk = walk.view(-1)
+    walk_len = len(walk)
+    sorted_walk, _ = torch.sort(walk)
+    walk_c = walk.cpu()
+    sorted_walk_c = sorted_walk.cpu()
+    return scale_invariant_signal_noise_ratio(sorted_walk_c, walk_c)
+
+def score_pesq(walk):
+    walk = walk.view(-1)
+    walk_len = len(walk)
+    sorted_walk, _ = torch.sort(walk)
+    walk_c = walk.cpu()
+    sorted_walk_c = sorted_walk.cpu()
+    return perceptual_evaluation_speech_quality(sorted_walk_c, walk_c, walk_len, 'wb')
+
+def score_pit(walk):
+    walk = walk.view(-1)
+    walk_len = len(walk)
+    sorted_walk, _ = torch.sort(walk)
+    walk_c = walk.cpu()
+    sorted_walk_c = sorted_walk.cpu()
+    metric = PermutationInvariantTraining(scale_invariant_signal_noise_ratio, mode='permutation-wise', eval_func="max")
+    score = metric(sorted_walk_c, walk_c)
+    return score
+

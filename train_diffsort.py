@@ -25,12 +25,12 @@ def train(args):
     
     model = wikiHowNet()
     model = model.to(args.device)
-    optim = torch.optim.Adam([#{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
+    optim = torch.optim.Adam([{'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
                               {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
                               {'params':model.fc2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
-                            #   {'params':model.fc3.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
-                              {'params':model.act1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, ])
-                            #   {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
+                                # {'params':model.fc3.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
+                              {'params':model.act1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6},])
+                            #    {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
     
     patience = 5
     best_val_loss = 1000.0
@@ -40,6 +40,14 @@ def train(args):
         score_function = functional.score_inversions
     if args.score_type == "emd":
         score_function = functional.score_emd
+    if args.score_type == "si-snr":
+        score_function = functional.score_si_snr
+    if args.score_type == "pesq":
+        score_function = functional.score_pesq
+    if args.score_type == "pit":
+        score_function = functional.score_pit
+    
+        
     for epoch in range(100):
         model.train()
         loss_list = []
@@ -57,7 +65,7 @@ def train(args):
             perm_squence = torch.matmul(shuffle_scalars.unsqueeze(1), target_idx)
             score = score_function(perm_squence)
             score_list.append(score)
-            if loss <0.5 and count <4 and len(perm_squence) >15:
+            if loss <0.5 and count <4 and len(perm_squence) >7:
                 count +=1
                 print("shuffle_scalars: ", shuffle_scalars)
                 print("perm_squence: ", perm_squence)

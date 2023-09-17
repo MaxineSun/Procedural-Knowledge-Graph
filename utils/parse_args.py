@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument('--learning_rate_nsg', type=float, default=5e-7, help='learning rate of next sentence generation model, default is 0.001.')
     parser.add_argument('--lr_MLP', type=float, default=5e-4)
     parser.add_argument('--lr_encoder', type=float, default=1e-7)
-    parser.add_argument('--score_type', nargs='?', default="inversions", help='choose the score type') #
+    parser.add_argument('--score_type', nargs='?', default="pit", help='choose the score type') #
     parser.set_defaults(directed=False)
 
     return parser.parse_args()
