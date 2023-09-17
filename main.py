@@ -8,8 +8,10 @@ import pickle
 
 
 def main(args):
-    p = sq.DBScan_Process()
-    p.Clustering(0.8)
+    # p = sq.DBScan_Process()
+    # p.Clustering(0.8)
+    p = psu.Data_Process()
+    p.json2dataset(args)
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ def train(args):
     # print(len(train_dataloader))
     count = 0
     for batch in train_dataloader:
-        print(len(batch[0]))
+        print(len(batch))
         count +=1
     print(count)
     
