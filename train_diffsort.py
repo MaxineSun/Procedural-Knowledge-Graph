@@ -10,10 +10,10 @@ from utils import diffsort, functional
 
 
 def train(args):
-    with open("../scratch/data/diff_sort/train_dataloader", "rb") as fp:
+    with open("../scratch/data/diff_sort/train_dataloader16", "rb") as fp:
         train_dataloader = pickle.load(fp)
     fp.close()
-    with open("../scratch/data/diff_sort/val_dataloader", "rb") as fp:
+    with open("../scratch/data/diff_sort/val_dataloader16", "rb") as fp:
         val_dataloader = pickle.load(fp)
     fp.close()
     

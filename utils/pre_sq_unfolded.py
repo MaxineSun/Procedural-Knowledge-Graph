@@ -21,11 +21,11 @@ class SentenceDataset(Dataset):
         return self.shuffled_embs[idx], self.target_idx_set[idx]
     
     
-def collate_fn_len_sort(batch):
-    batch_tensor = []
-    for shuffled_embs, target_idx_set in zip(*batch):
-        batch_tensor.append([shuffled_embs, target_idx_set])
-    return batch_tensor
+# def collate_fn_len_sort(batch):
+#     batch_tensor = []
+#     for shuffled_embs, target_idx_set in zip(*batch):
+#         batch_tensor.append([shuffled_embs, target_idx_set])
+#     return batch_tensor
 
 
 class Data_Process:
@@ -71,9 +71,9 @@ class Data_Process:
         val_dataset = dataset[train_size:train_size + val_size]
         test_dataset = dataset[train_size + val_size:]
         
-        train_dataloader = DataLoader(train_dataset, batch_size=16, collate_fn=collate_fn_len_sort)
-        val_dataloader = DataLoader(val_dataset, batch_size=16, collate_fn=collate_fn_len_sort)
-        test_dataloader = DataLoader(test_dataset, batch_size=16, collate_fn=collate_fn_len_sort)
+        train_dataloader = DataLoader(train_dataset, batch_size=16) #, collate_fn=collate_fn_len_sort)
+        val_dataloader = DataLoader(val_dataset, batch_size=16) #, collate_fn=collate_fn_len_sort)
+        test_dataloader = DataLoader(test_dataset, batch_size=16) #, collate_fn=collate_fn_len_sort)
                 
         with open("../scratch/data/diff_sort/train_dataloader16", "wb") as fp:
             pickle.dump(train_dataloader, fp)
