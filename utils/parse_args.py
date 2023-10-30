@@ -36,7 +36,8 @@ def parse_args():
     parser.add_argument('--lr_MLP', type=float, default=5e-4)
     parser.add_argument('--lr_softmax', type=float, default=1e-4)
     parser.add_argument('--lr_encoder', type=float, default=1e-7)
-    parser.add_argument('--score_type', nargs='?', default="emd", help='choose the score type') #
+    parser.add_argument('--score_type', nargs='?', default="emd", help='choose the score type') 
+    parser.add_argument('--shuffle_mode', nargs='?', default="ori", help='choose the prompt examples shuffle mode') 
     parser.set_defaults(directed=False)
 
     return parser.parse_args()
