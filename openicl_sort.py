@@ -18,7 +18,7 @@ def main(args):
                             ice_token='</E>'
             )
     # TopK Retriever
-    retriever = RandomRetriever(data, ice_num=4, index_split='train', test_split='test', seed=2, NP_mode='NP')
+    retriever = RandomRetriever(data, ice_num=4, index_split='train', test_split='test', seed=2, NP_mode=args.NP_mode)
     # Define a Inferencer
     inferencer = PPLInferencer(model_name='distilgpt2')
     # # Inference

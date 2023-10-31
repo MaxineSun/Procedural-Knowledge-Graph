@@ -69,7 +69,7 @@ class RandomRetriever(BaseRetriever):
                     if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
-            print(rtr_idx_list)
+            print("====", rtr_idx_list)
             return rtr_idx_list
         else:
             for _ in trange(len(self.test_ds), disable=not self.is_main_process):
