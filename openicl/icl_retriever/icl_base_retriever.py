@@ -96,6 +96,7 @@ class BaseRetriever:
                 generated_ice_list.append(
                     ice_template.generate_ice_item(self.index_ds[idx], self.index_ds[idx][dr.output_column]))
         generated_ice = self.ice_separator.join(generated_ice_list) + self.ice_eos_token
+
         return generated_ice
 
     def generate_prompt(self, idx: int, ice: str, ice_template: Optional[PromptTemplate] = None,

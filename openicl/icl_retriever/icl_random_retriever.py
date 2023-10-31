@@ -39,29 +39,43 @@ class RandomRetriever(BaseRetriever):
                  test_split: Optional[str] = 'test',
                  seed: Optional[int] = 43,
                  accelerator: Optional[Accelerator] = None,
-                 shuffle_mode = None,
+                 NP_mode = None,
                  ) -> None:
         super().__init__(dataset_reader, ice_separator, ice_eos_token, prompt_eos_token, ice_num, index_split,
                          test_split, accelerator)
         self.seed = seed
-        self.shuffle_mode = shuffle_mode
+        self.NP_mode = NP_mode
+        self.dataset_reader = DatasetReader._check_dataset_reader(dataset_reader)
 
     def retrieve(self):
         np.random.seed(self.seed)
         num_idx = len(self.index_ds)
         rtr_idx_list = []
         logger.info("Retrieving data for test set...")
-        # if self.shuffle_mode == "NP":
-        #     for _ in trange(len(self.test_ds), disable=not self.is_main_process):
-        #         idx_list = []
-        #         while 
-        #         rtr_idx_list.append(idx_list)
-        #     return rtr_idx_list
-        # else:
-        for _ in trange(len(self.test_ds), disable=not self.is_main_process):
-            idx_list = np.random.choice(num_idx, self.ice_num, replace=False).tolist()
-            rtr_idx_list.append(idx_list)
-        return rtr_idx_list
+        
+        
+        if self.NP_mode == "NP":
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < num_idx - 1:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < num_idx:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        else:
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = np.random.choice(num_idx, self.ice_num, replace=False).tolist()
+                rtr_idx_list.append(idx_list)
+            return rtr_idx_list
         
     # def check_NP(self, ):
         
