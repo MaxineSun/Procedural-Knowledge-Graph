@@ -81,12 +81,12 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 2:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
@@ -101,22 +101,22 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 3:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -2:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -1:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
@@ -131,17 +131,17 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 3:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -1:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
@@ -156,17 +156,17 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 3:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -1:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
@@ -181,22 +181,22 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 3:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -2:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num -1:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
@@ -211,12 +211,12 @@ class RandomRetriever(BaseRetriever):
                 while len(idx_list) < self.ice_num - 2:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
-                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
             print(rtr_idx_list)
