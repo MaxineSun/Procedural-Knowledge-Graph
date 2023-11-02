@@ -58,24 +58,174 @@ class RandomRetriever(BaseRetriever):
             dr = self.dataset_reader
             for _ in trange(len(self.test_ds), disable=not self.is_main_process):
                 idx_list = []
-                while len(idx_list) < num_idx - 1:
+                while len(idx_list) < self.ice_num - 1:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
                     if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
                         idx_list.append(idx)
-                while len(idx_list) < num_idx:
+                while len(idx_list) < self.ice_num:
                     idx = int(np.random.choice(num_idx, 1))
                     # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
                     if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
                         idx_list.append(idx)
                 rtr_idx_list.append(idx_list)
-            print("====", rtr_idx_list)
+            print(rtr_idx_list)
             return rtr_idx_list
+        
+        elif self.NP_mode == "NNPP":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 2:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
+        elif self.NP_mode == "NPNP":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 3:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -2:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -1:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
+        elif self.NP_mode == "NPPN":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 3:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -1:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
+        elif self.NP_mode == "PNNP":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 3:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -1:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
+        elif self.NP_mode == "PNPN":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 3:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -2:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num -1:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
+        elif self.NP_mode == "PPNN":
+            if self.ice_num != 4:
+                raise ValueError("The index number is not 4.")
+            dr = self.dataset_reader
+            for _ in trange(len(self.test_ds), disable=not self.is_main_process):
+                idx_list = []
+                while len(idx_list) < self.ice_num - 2:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 1:
+                        idx_list.append(idx)
+                while len(idx_list) < self.ice_num:
+                    idx = int(np.random.choice(num_idx, 1))
+                    # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                    if self.dataset_reader.dataset["train"][idx][dr.output_column] == 0:
+                        idx_list.append(idx)
+                rtr_idx_list.append(idx_list)
+            print(rtr_idx_list)
+            return rtr_idx_list
+        
         else:
             for _ in trange(len(self.test_ds), disable=not self.is_main_process):
                 idx_list = np.random.choice(num_idx, self.ice_num, replace=False).tolist()
                 rtr_idx_list.append(idx_list)
             return rtr_idx_list
         
-    # def check_NP(self, ):
         

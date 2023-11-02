@@ -127,6 +127,25 @@ class PPLInferencer(BaseInferencer):
             logger.info(f"Calculating PPL for prompts labeled '{label}'")
             for idx in trange(0, len(prompt_list), self.batch_size, disable=not self.is_main_process):
                 sub_prompt_list = prompt_list[idx:idx + self.batch_size]
+                if sub_prompt_list != []:
+                    if shuffle_mode == "sorted":
+                        # print(sub_ppl_list)
+                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                        tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+                        encoded_sqs = tokenizer(prompt_list_sep[:-1], padding=True, truncation=True, max_length=128, return_tensors='pt')
+                        encoded_sqs = encoded_sqs.to('cuda')
+                        _, perm_matrix = sorting_net_work(encoded_sqs)
+                        idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda') # [0 1 2 3 4 5 6 7]
+                        idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist() # [1 0 2 3 4 5 6 7]
+                        idx_prompt += [len(encoded_sqs['input_ids'])]
+                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                    if shuffle_mode == "reverse":
+                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                        idx_prompt = list(range(len(prompt_list_sep)-1))
+                        idx_prompt.reverse()
+                        idx_prompt += [len(prompt_list_sep)-1]
+                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                    
                 if normalizing_str is not None:
                     sub_context_length_list = context_length_list[idx:idx + self.batch_size]
                     sub_normalizing_prompt_list = normalizing_prompt_list[idx:idx + self.batch_size]
@@ -140,36 +159,13 @@ class PPLInferencer(BaseInferencer):
                     sub_res = self.__get_ppl(sub_prompt_list).tolist()
                     
                 for res, prompt in zip(sub_res, sub_prompt_list):
+                    print(prompt)
                     sub_ppl_list.append(res)
-                    if shuffle_mode == "ori":
-                        output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
-                        index = index + 1
-                    else:
-                        prompt_list_sep = self.prompt_sep(prompt)
-                        if shuffle_mode == "sorted":
-                            tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-                            encoded_sqs = tokenizer(prompt_list_sep[:-1], padding=True, truncation=True, max_length=128, return_tensors='pt')
-                            encoded_sqs = encoded_sqs.to('cuda')
-                            _, perm_matrix = sorting_net_work(encoded_sqs)
-                            idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda') # [0 1 2 3 4 5 6 7]
-                            idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist() # [1 0 2 3 4 5 6 7]
-                            idx_prompt += [len(encoded_sqs['input_ids'])]
-                            print(idx_prompt)
-                            prompt = self.prompt_join(prompt_list_sep, idx_prompt)
-                            print(prompt)
-                            output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
-                            index = index + 1
-                        if shuffle_mode == "reverse":
-                            idx_prompt = list(range(len(prompt_list_sep)-1))
-                            idx_prompt.reverse()
-                            idx_prompt += [len(prompt_list_sep)-1]
-                            print(idx_prompt)
-                            prompt = self.prompt_join(prompt_list_sep, idx_prompt)
-                            print(prompt)
-                            output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
-                            index = index + 1
+                    output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
+                    index = index + 1
             ppl.append(sub_ppl_list)
-
+        
+        
         # 6. Get lowest PPL class as predictions
         ppl = list(zip(*ppl))
         for single_ppl in ppl:

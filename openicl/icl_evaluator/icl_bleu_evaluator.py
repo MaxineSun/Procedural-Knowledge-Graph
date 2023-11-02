@@ -10,6 +10,7 @@ class BleuEvaluator(BaseEvaluator):
 
     def score(self, predictions, references):
         assert len(predictions) == len(references)
-        metric = evaluate.load("sacrebleu")
+        # metric = evaluate.load("sacrebleu")
+        metric = evaluate.load("evaluate/metrics/bleu/bleu.py")
         scores = metric.compute(predictions=predictions, references=references)
         return scores
