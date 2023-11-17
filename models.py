@@ -144,28 +144,37 @@ class MLP(torch.nn.Module):
 class wikiHowNet(nn.Module):
     def __init__(self):
         super(wikiHowNet, self).__init__()
+        '''
         self.fc1 = nn.Linear(384, 128)
         init.normal_(self.fc1.weight, mean=1.0, std=0.30)
         self.fc2 = nn.Linear(128, 1)
         init.normal_(self.fc2.weight, mean=1.0, std=0.30)
         self.act1 = torch.nn.LeakyReLU()
+        '''
         self.encode_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-        self.temperature = nn.Parameter(torch.tensor(100.0, requires_grad=True))
+        self.pred_head = torch.nn.Sequential(torch.nn.Linear(384, 64),
+                                            torch.nn.Linear(64, 1),
+                                            torch.nn.Softmax())
+        #self.temperature = nn.Parameter(torch.tensor(100.0, requires_grad=True))
 
     def forward(self, x):
         args = pa.parse_args()
         encode_shuffled_sq = self.encode_model(**x)
         sq_shuffled_emb = functional.mean_pooling(encode_shuffled_sq, x['attention_mask'])
         len_sq = len(sq_shuffled_emb)
+        '''
         sq_shuffled_emb = self.fc1(sq_shuffled_emb)
         sq_shuffled_emb = self.act1(sq_shuffled_emb)
         shuffle_scalars = self.fc2(sq_shuffled_emb)
+        '''
+        shuffle_scalars = self.pred_head(sq_shuffled_emb)
         shuffle_scalars = shuffle_scalars.view(1, -1)
+        '''
         # length = len(shuffle_scalars[0])
         # shuffle_scalars = length * (shuffle_scalars - shuffle_scalars.min()) / (shuffle_scalars.max() - shuffle_scalars.min())
         # shuffle_scalars = shuffle_scalars - shuffle_scalars.mean()
         shuffle_scalars = functional.temperature_scaled_softmax(shuffle_scalars, self.temperature)
-        
+        '''
         sorter = diffsort.DiffSortNet(
             sorting_network_type='odd_even',
             size=len_sq,

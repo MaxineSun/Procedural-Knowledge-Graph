@@ -14,6 +14,8 @@ from scipy.stats import wasserstein_distance
 def train(args):
     model = wikiHowNet()
     model = model.to(args.device)
+    optim = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-2)
+    '''
     optim = torch.optim.Adam([ {'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
                               {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
                               {'params':model.fc2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
@@ -21,7 +23,7 @@ def train(args):
                               {'params':model.act1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6},
                               {'params':model.temperature, 'lr':args.lr_softmax, 'weight_decay':1e-6}])
                                 # {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
-    
+    '''
     patience = 5
     best_val_loss = 1000.0
     current_patience = 0
