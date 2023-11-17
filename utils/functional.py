@@ -245,3 +245,17 @@ def choose_batch_idx(sq_len_list):
 def temperature_scaled_softmax(logits, temperature=1.0):
     logits = logits / temperature
     return torch.softmax(logits, dim=1)
+
+
+def random_seq(class_num, length):
+    return list(np.random.choice(list(range(class_num)), length))
+    
+
+def seq_entropy(random_seq):
+    entropy = 0
+    pre = random_seq[0]
+    for item in random_seq[1:]:
+        if item != pre:
+            entropy += 1
+        pre = item
+    return entropy

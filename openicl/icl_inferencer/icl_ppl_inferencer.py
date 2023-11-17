@@ -68,15 +68,16 @@ class PPLInferencer(BaseInferencer):
             output_json_filepath = self.output_json_filepath
         if output_json_filename is None:
             output_json_filename = self.output_json_filename
-
+        
         # 2. Get results of retrieval process
         ice_idx_list = retriever.retrieve()
+        
         # 3. Get labels of all the classes
         if self.labels is None:
             labels = retriever.get_labels(ice_template=ice_template, prompt_template=prompt_template)
         else:
             labels = self.labels
-
+        
         # 4. Generate in-context examples for testing inputs
         for idx in range(len(ice_idx_list)):
             ice.append(retriever.generate_ice(ice_idx_list[idx], ice_template=ice_template))
@@ -122,21 +123,20 @@ class PPLInferencer(BaseInferencer):
             
             if normalizing_str is not None:
                 normalizing_str_len = self.get_input_token_num(normalizing_str)
-
+            
             # 5.2 Get PPL
             logger.info(f"Calculating PPL for prompts labeled '{label}'")
             for idx in trange(0, len(prompt_list), self.batch_size, disable=not self.is_main_process):
                 sub_prompt_list = prompt_list[idx:idx + self.batch_size]
                 if sub_prompt_list != []:
                     if shuffle_mode == "sorted":
-                        # print(sub_ppl_list)
                         prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
                         tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
                         encoded_sqs = tokenizer(prompt_list_sep[:-1], padding=True, truncation=True, max_length=128, return_tensors='pt')
                         encoded_sqs = encoded_sqs.to('cuda')
                         _, perm_matrix = sorting_net_work(encoded_sqs)
-                        idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda') # [0 1 2 3 4 5 6 7]
-                        idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist() # [1 0 2 3 4 5 6 7]
+                        idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda')
+                        idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist()
                         idx_prompt += [len(encoded_sqs['input_ids'])]
                         sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
                     if shuffle_mode == "reverse":
@@ -145,24 +145,25 @@ class PPLInferencer(BaseInferencer):
                         idx_prompt.reverse()
                         idx_prompt += [len(prompt_list_sep)-1]
                         sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
-                    
-                if normalizing_str is not None:
-                    sub_context_length_list = context_length_list[idx:idx + self.batch_size]
-                    sub_normalizing_prompt_list = normalizing_prompt_list[idx:idx + self.batch_size]
-                if normalizing_str is not None:
-                    res1 = self.__get_ppl(input_texts=sub_prompt_list, mask_length=sub_context_length_list)
-                    res2 = self.__get_ppl(input_texts=sub_normalizing_prompt_list,
-                                            mask_length=[normalizing_str_len for i in range(len(sub_prompt_list))]
-                                            )
-                    sub_res = res1 - res2
-                else:
-                    sub_res = self.__get_ppl(sub_prompt_list).tolist()
+                        
+                with torch.no_grad():
+                    if normalizing_str is not None:
+                        sub_context_length_list = context_length_list[idx:idx + self.batch_size]
+                        sub_normalizing_prompt_list = normalizing_prompt_list[idx:idx + self.batch_size]
+                    if normalizing_str is not None:
+                        res1 = self.__get_ppl(input_texts=sub_prompt_list, mask_length=sub_context_length_list)
+                        res2 = self.__get_ppl(input_texts=sub_normalizing_prompt_list,
+                                                mask_length=[normalizing_str_len for i in range(len(sub_prompt_list))]
+                                                )
+                        sub_res = res1 - res2
+                    else:
+                        sub_res = self.__get_ppl(sub_prompt_list).tolist()
                     
                 for res, prompt in zip(sub_res, sub_prompt_list):
-                    print(prompt)
                     sub_ppl_list.append(res)
                     output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
                     index = index + 1
+                    # print(prompt)
             ppl.append(sub_ppl_list)
         
         
@@ -215,5 +216,4 @@ class PPLInferencer(BaseInferencer):
     def prompt_join(self, sep_prompt_list, idx):
         prompt_list = [sep_prompt_list[i] for i in idx]
         return '\n'.join(prompt_list)
-    
-    
+        
