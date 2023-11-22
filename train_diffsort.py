@@ -4,6 +4,8 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm
+import pathlib
+import transformers
 from sentence_transformers import SentenceTransformer
 from models import wikiHowNet
 from utils import functional
@@ -14,7 +16,8 @@ from scipy.stats import wasserstein_distance
 def train(args):
     model = wikiHowNet()
     model = model.to(args.device)
-    optim = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-2)
+    optim = transformers.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-3)
+    transformers.get_cosine_schedule_with_warmup(optim, 500, 88000)
     '''
     optim = torch.optim.Adam([ {'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
                               {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
@@ -24,9 +27,11 @@ def train(args):
                               {'params':model.temperature, 'lr':args.lr_softmax, 'weight_decay':1e-6}])
                                 # {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
     '''
-    patience = 5
+    patience = 20
     best_val_loss = 1000.0
     current_patience = 0
+    dir = pathlib.Path(__file__).resolve().parent.parent
+    model_dir = dir/"scratch"/"data"/"diff_sort"/"model32"
     if args.score_type == "inversions":
         score_function = functional.score_inversions
     if args.score_type == "emd":
@@ -45,37 +50,34 @@ def train(args):
         loss_accu = []
         score_list = []
         for i in range(55):
-            with open(f"../scratch/data/diff_sort/separate_sq_set/sq_set{str(i).zfill(5)}", "rb") as fp:
+            file_name = f"sq_set{str(i).zfill(5)}"
+            sq_dir = dir/"scratch"/"data"/"diff_sort"/"separate_sq_set"/file_name
+            with open(sq_dir, "rb") as fp:
                 sq_set_shuffled = pickle.load(fp)
             fp.close()
-            with open(f"../scratch/data/diff_sort/separate_target_idx/target_idx{str(i).zfill(5)}", "rb") as fp:
+            file_name = f"target_idx{str(i).zfill(5)}"
+            ti_dir = dir/"scratch"/"data"/"diff_sort"/"separate_target_idx"/file_name
+            with open(ti_dir, "rb") as fp:
                 target_idx_set = pickle.load(fp)
             fp.close()
             
             for b_ind, (shuffle_sq, target_idx) in enumerate(zip(sq_set_shuffled, target_idx_set)):
-                if target_idx_set[b_ind].size()[0] < 33:
+                if target_idx_set[b_ind].size()[0] < 128:
                     shuffle_sq = shuffle_sq.to(args.device)
                     target_idx = target_idx.to(args.device)
                     shuffle_scalars, perm_prediction = model(shuffle_sq)
                     loss = torch.nn.BCELoss()(perm_prediction, target_idx)
                     loss_list.append(loss)
-                    # print("loss: ", loss)
                     loss = loss / args.NUM_ACCUMULATION_STEPS
                     loss.backward()
-                    perm_squence = torch.matmul(shuffle_scalars.unsqueeze(1), target_idx)
+                    perm_squence = torch.matmul(shuffle_scalars, target_idx)
                     score = score_function(perm_squence)
                     score_list.append(score)
-
-                    
                     if ((b_ind + 1) % args.NUM_ACCUMULATION_STEPS == 0) or (b_ind + 1 == len(sq_set_shuffled)):
                         optim.step()
                         optim.zero_grad()
                         loss_accu.append(sum(loss_list)/len(loss_list))
                         loss_list = []
-            if i % 10 == 0:
-                print("shuffle_scalars: ", torch.argsort(shuffle_scalars))
-                print("perm_squence: ", torch.argsort(perm_squence))
-                print(score)
         print("Loss in epoch", epoch, " is ", sum(loss_accu)/len(loss_accu))
         print("Score in epoch", epoch, " is ", sum(score_list)/len(score_list))
         
@@ -85,10 +87,14 @@ def train(args):
             loss_list = []
             score_list = []
             for i in range(55, 73):
-                with open(f"../scratch/data/diff_sort/separate_sq_set/sq_set{str(i).zfill(5)}", "rb") as fp:
+                file_name = f"sq_set{str(i).zfill(5)}"
+                sq_dir = dir/"scratch"/"data"/"diff_sort"/"separate_sq_set"/file_name
+                with open(sq_dir, "rb") as fp:
                     sq_set_shuffled = pickle.load(fp)
                 fp.close()
-                with open(f"../scratch/data/diff_sort/separate_target_idx/target_idx{str(i).zfill(5)}", "rb") as fp:
+                file_name = f"target_idx{str(i).zfill(5)}"
+                ti_dir = dir/"scratch"/"data"/"diff_sort"/"separate_target_idx"/file_name
+                with open(ti_dir, "rb") as fp:
                     target_idx_set = pickle.load(fp)
                 fp.close()
                 for b_ind, (shuffle_sq, target_idx) in enumerate(zip(sq_set_shuffled, target_idx_set)):
@@ -98,13 +104,13 @@ def train(args):
                         shuffle_scalars, perm_prediction = model(shuffle_sq)
                         loss = torch.nn.BCELoss()(perm_prediction, target_idx)
                         loss_list.append(loss)
-                        perm_squence = torch.matmul(shuffle_scalars.unsqueeze(1), target_idx)
+                        perm_squence = torch.matmul(shuffle_scalars, target_idx)
                         score = score_function(perm_squence)
                         score_list.append(score)
                 val_loss_mean = sum(loss_list)/len(loss_list)
-                print("shuffle_scalars: ", torch.argsort(shuffle_scalars))
-                print("perm_squence: ", torch.argsort(perm_squence))
-                print(score)
+                # print("shuffle_scalars: ", torch.argsort(shuffle_scalars))
+                # print("perm_squence: ", torch.argsort(perm_squence))
+
             print("Val loss in epoch", epoch, " is ", val_loss_mean)
             print("Val score in epoch", epoch, " is ", sum(score_list)/len(score_list))
 
@@ -115,11 +121,11 @@ def train(args):
             current_patience += 1
             if current_patience >= patience:
                 print("Early stopping triggered!")
-                with open(f"../scratch/data/diff_sort/model32", "wb") as fp:
+                with open(model_dir, "wb") as fp:
                     pickle.dump(model, fp)
                 fp.close()
                 break
-        with open(f"../scratch/data/diff_sort/model32", "wb") as fp:
+        with open(model_dir, "wb") as fp:
             pickle.dump(model, fp)
         fp.close()
 

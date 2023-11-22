@@ -30,16 +30,25 @@ def parse_args():
     parser.add_argument('-n', '--num_compare', type=int, default=8)
     parser.add_argument('-s', '--steepness', type=float, default=10)
     parser.add_argument('-a', '--art_lambda', type=float, default=0.25)
-    parser.add_argument('-accu', '--NUM_ACCUMULATION_STEPS', type=int, default=64)
+    parser.add_argument('-accu', '--NUM_ACCUMULATION_STEPS', type=int, default=32)
     parser.add_argument('--nsg_batch_size', type=int, default=16, help='batch size of next sentence generation model, default is 32.')
     parser.add_argument('--learning_rate_nsg', type=float, default=5e-7, help='learning rate of next sentence generation model, default is 0.001.')
     parser.add_argument('--lr_MLP', type=float, default=5e-4)
     parser.add_argument('--lr_softmax', type=float, default=1e-4)
     parser.add_argument('--lr_encoder', type=float, default=1e-7)
     parser.add_argument('--score_type', nargs='?', default="emd", help='choose the score type') 
-    parser.add_argument('--shuffle_mode', nargs='?', default="ori", help='choose the prompt examples shuffle mode') 
-    parser.add_argument('--NP_mode', nargs='?', default="PPNN", help='choose the NP prompt examples shuffle mode') 
+    
+    parser.add_argument('--shuffle_mode', nargs='?', default="ori", help='choose the prompt examples shuffle mode')
+    parser.add_argument('--NP_mode', nargs='?', default="None", help='choose the NP prompt examples shuffle mode') 
     parser.add_argument('--case', nargs='?', default="bi-class", help='choose the ICL case type') 
+    parser.add_argument('--random_seed', type=int, default=42) 
+    parser.add_argument('--sequence_length', type=int, default=16) 
+    parser.add_argument('--data_classes', type=int, default=5) 
+    parser.add_argument('--parallel_id', type=int, default=2) 
+    parser.add_argument('--dataset', nargs='?', default="sst5", help='choose the dataset') 
+    parser.add_argument('--model', nargs='?', default='gpt2-xl', help='choose the model name') #gpt2-xl') EleutherAI/gpt-j-6b'
+    
+    parser.add_argument('--data_dir', nargs='?', default='reverse_5_gpt2-xl_16', help='choose the file path name') 
     parser.set_defaults(directed=False)
 
     return parser.parse_args()

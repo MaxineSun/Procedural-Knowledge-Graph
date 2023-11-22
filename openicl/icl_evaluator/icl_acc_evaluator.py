@@ -2,6 +2,7 @@
 from openicl.icl_evaluator import BaseEvaluator
 from typing import List
 import evaluate
+import pathlib
 
 
 class AccEvaluator(BaseEvaluator):
@@ -17,5 +18,7 @@ class AccEvaluator(BaseEvaluator):
                 mapping_to_int_dict[str(pred)] = len(mapping_to_int_dict)
         golds = [mapping_to_int_dict[str(gold)] for gold in references]
         preds = [mapping_to_int_dict[str(pred)] for pred in predictions]
-        metric = evaluate.load("evaluate/metrics/accuracy/accuracy.py")
+        dir = pathlib.Path(__file__).resolve().parent.parent.parent
+        dir = dir/"evaluate"/"metrics"/"accuracy"/"accuracy.py"
+        metric = evaluate.load(str(dir))
         return metric.compute(references=golds, predictions=preds)

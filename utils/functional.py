@@ -256,6 +256,6 @@ def seq_entropy(random_seq):
     pre = random_seq[0]
     for item in random_seq[1:]:
         if item != pre:
-            entropy += 1
+            entropy += abs(item - pre)
         pre = item
     return entropy
