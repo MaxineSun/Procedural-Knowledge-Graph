@@ -17,7 +17,9 @@ def train(args):
     model = wikiHowNet()
     model = model.to(args.device)
     optim = transformers.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-3)
-    transformers.get_cosine_schedule_with_warmup(optim, 500, 88000)
+    epoch_num = 100
+    data_num = 55
+    scheduler = transformers.get_cosine_schedule_with_warmup(optim, int(epoch_num*data_num/10), epoch_num*data_num)
     '''
     optim = torch.optim.Adam([ {'params':model.encode_model.parameters(), 'lr':args.lr_encoder}, 
                               {'params':model.fc1.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}, 
@@ -43,13 +45,12 @@ def train(args):
     if args.score_type == "pit":
         score_function = functional.score_pit
     
-        
-    for epoch in range(100):
+    for epoch in range(epoch_num):
         model.train()
         loss_list = []
         loss_accu = []
         score_list = []
-        for i in range(55):
+        for i in range(data_num):
             file_name = f"sq_set{str(i).zfill(5)}"
             sq_dir = dir/"scratch"/"data"/"diff_sort"/"separate_sq_set"/file_name
             with open(sq_dir, "rb") as fp:
@@ -78,6 +79,7 @@ def train(args):
                         optim.zero_grad()
                         loss_accu.append(sum(loss_list)/len(loss_list))
                         loss_list = []
+            scheduler.step()
         print("Loss in epoch", epoch, " is ", sum(loss_accu)/len(loss_accu))
         print("Score in epoch", epoch, " is ", sum(score_list)/len(score_list))
         
