@@ -6,6 +6,7 @@ from openicl.utils.logging import get_logger
 from typing import List, Union, Optional
 from tqdm import trange
 import numpy as np
+import utils.parse_args as pa
 from accelerate import Accelerator
 
 logger = get_logger(__name__)
@@ -54,6 +55,7 @@ class RandomRetriever(BaseRetriever):
         num_idx = len(self.index_ds)
         rtr_idx_list = []
         logger.info("Retrieving data for test set...")
+        args = pa.parse_args()
         
         
         if self.NP_mode == "NP":
@@ -74,6 +76,7 @@ class RandomRetriever(BaseRetriever):
             return rtr_idx_list
         
         elif type(self.NP_mode) is list:
+            label_list = ['Agent', 'Place', 'Species', 'Work', 'Event', 'UnitOfWork', 'TopicalConcept', 'Device', 'SportsSeason']
             if self.ice_num != len(self.NP_mode):
                 raise ValueError("The index number is not correct.")
             dr = self.dataset_reader
@@ -82,9 +85,16 @@ class RandomRetriever(BaseRetriever):
                 for i in self.NP_mode:
                     while len(idx_list) < self.ice_num:
                         idx = int(np.random.choice(num_idx, 1))
-                        if self.dataset_reader.dataset["train"][idx][dr.output_column] == i:
-                            idx_list.append(idx)
-                            break
+                        # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
+                        # print(label_list[i])
+                        if args.dataset in ["sst5", "sst2"]:
+                            if self.dataset_reader.dataset["train"][idx][dr.output_column] == i:
+                                idx_list.append(idx)
+                                break
+                        if args.dataset == "DeveloperOats/DBPedia_Classes":
+                            if self.dataset_reader.dataset["train"][idx][dr.output_column] == label_list[i]:
+                                idx_list.append(idx)
+                                break
                 rtr_idx_list.append(idx_list)
             return rtr_idx_list
         

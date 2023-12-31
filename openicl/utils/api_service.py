@@ -2,13 +2,20 @@ import json
 import requests
 import os
 import openai
+from openai import OpenAI
 import time
 import numpy as np
+from transformers import AutoTokenizer
+import transformers
+import torch
+import re
 
-OPENICL_API_NAME_LIST = ['opt-175b', 'gpt3']
+OPENICL_API_NAME_LIST = ['opt-175b', 'gpt3', 'llama', 'gpt-3.5-turbo-instruct']
 OPENICL_API_PARAMETER_DICT = {
     'opt-175b': ['URL', 'headers'],
-    'gpt3': ['engine', 'temperature', 'max_tokens', 'top_p', 'frequency_penalty', 'presence_penalty', 'sleep_time']
+    'gpt3': ['engine', 'temperature', 'max_tokens', 'top_p', 'frequency_penalty', 'presence_penalty', 'sleep_time'],
+    'llama': [],
+    'gpt-3.5-turbo-instruct':[]
 }
 OPENICL_API_REQUEST_CONFIG = {
     'opt-175b': {
@@ -25,7 +32,9 @@ OPENICL_API_REQUEST_CONFIG = {
         'frequency_penalty': 0.0,
         'presence_penalty': 0.0,
         'sleep_time': 3
-    }
+    },
+    'llama': {},
+    'gpt-3.5-turbo-instruct':{}
 }
 PROXIES = {"https": "", "http": ""}
 
@@ -85,3 +94,48 @@ def api_get_tokens(api_name, input_texts):
         time.sleep(OPENICL_API_REQUEST_CONFIG['gpt3']['sleep_time'])
         return [(input + r['text']) for r, input in zip(response['choices'], input_texts)], [r['text'] for r in
                                                                                              response['choices']]
+        
+    if api_name == 'llama':
+        model = 'NousResearch/Llama-2-7b-hf' #"meta-llama/Llama-2-7b-chat-hf"
+
+        tokenizer = AutoTokenizer.from_pretrained(model)
+        pipeline = transformers.pipeline(
+            "text-generation",
+            model=model,
+            torch_dtype=torch.float16,
+            device_map="auto",
+        )
+        sequences = pipeline(
+            input_texts[0],
+            do_sample=True,
+            top_k=10,
+            num_return_sequences=1,
+            eos_token_id=tokenizer.eos_token_id,
+            max_length=1500,
+        )
+        result = sequences[0]['generated_text']
+        result = result.split("\n Question")
+        if len(result) < 5:
+            result = sequences[0]['generated_text']
+            result = result.split("\nQuestion")
+        result = ["Question"+item for item in result]
+        result[0] = result[0][9:]
+        result = [item+"\n " for item in result]
+        complete_output = [''.join(result[:5])]
+        generated = result[4].split("Answer: Let's think step by step.")
+        if len(generated)<2:
+            generated = result[4].split("Answer:")
+        generated = generated[1]
+        generated = generated[:-2]
+        return complete_output, [generated]
+        
+    if api_name == 'gpt-3.5-turbo-instruct':
+        client = OpenAI()
+        response = client.completions.create(
+            model="gpt-3.5-turbo-instruct",
+            prompt=input_texts[0],
+            max_tokens=1000
+        )
+        solution = '\n'+response.choices[0].text
+        complete_output = [input_texts[0]+solution]
+        return complete_output, [solution]

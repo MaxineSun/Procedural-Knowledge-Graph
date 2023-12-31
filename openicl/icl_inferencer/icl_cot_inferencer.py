@@ -9,9 +9,12 @@ from typing import List, Union, Optional
 from tqdm import tqdm
 from transformers import PretrainedConfig
 from openicl.utils.api_service import *
-from openicl.utils.icl_common_utils import get_dataloader, get_generation_prompt_list_from_retriever_indices
+from openicl.utils.icl_common_utils import get_dataloader, get_generation_prompt_list_from_retriever_indices, shuffle_examples
 from openicl.utils.logging import get_logger
 from accelerate import Accelerator
+import pickle
+import pathlib
+from transformers import AutoTokenizer
 
 logger = get_logger(__name__)
 
@@ -70,9 +73,17 @@ class CoTInferencer(BaseInferencer):
             output_json_filename = self.output_json_filename
 
         # 2. Get results of retrieval process
-        ice_idx_list = retriever.retrieve()
+        # ice_idx_list = retriever.retrieve()
+        dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+        save_dir = dir/"scratch"/"data"
+        # with open(save_dir/"ice_idx_list_1", "wb") as fp:
+        #     pickle.dump(ice_idx_list, fp)
+        # fp.close()
+        with open(save_dir/"ice_idx_list_1319", "rb") as fp:
+            ice_idx_list = pickle.load(fp)
+        fp.close()
         cot_list_len = len(self.cot_list)
-
+        
         # 3. Generate prompts for testing input 
         prompt_list = get_generation_prompt_list_from_retriever_indices(ice_idx_list, retriever, self.tokenizer,
                                                                         self.gen_field_replace_token,
@@ -110,6 +121,7 @@ class CoTInferencer(BaseInferencer):
                                                                 skip_special_tokens=True)
                 # 4-2-2. Inference with remote API
                 else:
+                    entry = shuffle_examples(entry)
                     complete_output, generated = api_get_tokens(self.api_name, entry)
 
                 # 4-2-3. Save current output
@@ -130,10 +142,11 @@ class CoTInferencer(BaseInferencer):
                 self.accelerator.wait_for_everyone()
             output_handler.merge_to_main_process(output_json_filepath, filename)
             output_handler.write_to_json(output_json_filepath, filename)
-
+        
             # 4-4. Check for next string in `self.cot_list`
             if cot_idx < cot_list_len:
                 prompt_list = [(prompt + str(self.cot_list[cot_idx])) for prompt in prompt_list]
             else:
                 break
+            
         return [sample['prediction'] for sample in output_handler.results_dict.values()]

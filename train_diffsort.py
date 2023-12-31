@@ -29,7 +29,7 @@ def train(args):
                               {'params':model.temperature, 'lr':args.lr_softmax, 'weight_decay':1e-6}])
                                 # {'params':model.act2.parameters(), 'lr':args.lr_MLP, 'weight_decay':1e-6}])
     '''
-    patience = 20
+    patience = 50
     best_val_loss = 1000.0
     current_patience = 0
     dir = pathlib.Path(__file__).resolve().parent.parent

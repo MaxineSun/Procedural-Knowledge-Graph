@@ -69,7 +69,7 @@ class BaseInferencer:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         if self.model is not None:
             self.model.to(self.device)
-        self.model.eval()  
+        # self.model.eval()  
         self.max_model_token_num = max_model_token_num
         self.batch_size = batch_size
         self.output_json_filepath = output_json_filepath
@@ -79,7 +79,7 @@ class BaseInferencer:
 
     def inference(self, retriever: BaseRetriever, ice_template: Optional[PromptTemplate] = None,
                   prompt_template: Optional[PromptTemplate] = None, output_json_filepath: Optional[str] = None,
-                  output_json_filename: Optional[str] = None) -> List:
+                  output_json_filename: Optional[str] = None, sorting_net_work=None, shuffle_mode=None) -> List:
         """Perform In-Context Inference given a retriever and optional templates.
 
         Args:

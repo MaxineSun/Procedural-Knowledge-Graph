@@ -14,7 +14,10 @@ from tqdm import trange
 from transformers import PretrainedConfig
 from accelerate import Accelerator
 from transformers import AutoTokenizer
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import paired_cosine_distances
 import numpy as np
+import pathlib
 
 logger = get_logger(__name__)
 
@@ -145,7 +148,21 @@ class PPLInferencer(BaseInferencer):
                         idx_prompt.reverse()
                         idx_prompt += [len(prompt_list_sep)-1]
                         sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
-                        
+                    if shuffle_mode == "bubble":
+                        dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+                        model_save_path = dir/"scratch"/"data"/"nlisentence-transformers-all-mpnet-base-v2"
+                        nli_model = SentenceTransformer(model_save_path)
+                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                        prompt_emb_list = [nli_model.encode(item) for item in prompt_list_sep]
+                        cos_sim_list = [paired_cosine_distances(prompt_emb_list[0].reshape(1,-1), item.reshape(1,-1))[0] for item in prompt_emb_list[1:]]
+                        idx_prompt = list(range(len(prompt_list_sep)-1))
+                        n = len(prompt_emb_list)-1
+                        for i in range(n-1):
+                            for j in range(1, n-i-1):
+                                if cos_sim_list[j] > cos_sim_list[j+1]:
+                                    idx_prompt[j], idx_prompt[j+1] = idx_prompt[j+1], idx_prompt[j]
+                        idx_prompt = [0]+idx_prompt
+                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
                 with torch.no_grad():
                     if normalizing_str is not None:
                         sub_context_length_list = context_length_list[idx:idx + self.batch_size]
@@ -163,7 +180,6 @@ class PPLInferencer(BaseInferencer):
                     sub_ppl_list.append(res)
                     output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
                     index = index + 1
-                    # print(prompt)
             ppl.append(sub_ppl_list)
         
         
@@ -187,15 +203,18 @@ class PPLInferencer(BaseInferencer):
             return api_get_ppl(self.api_name, input_texts)
         self.tokenizer.padding_side = "right"
         inputs = self.tokenizer(input_texts, padding=True, return_tensors='pt', truncation=True)
-        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+        # print(self.model)
+        inputs = {k: v.to(self.model.device) for k, v in inputs.items() if k in ['input_ids', 'attention_mask']}
         outputs = self.model(**inputs)
-
+        # outputs = model(**inputs, labels=inputs["input_ids"]).logits.softmax(-1)[:, -1, :][:,label_tokenids]
         shift_logits = outputs.logits[..., :-1, :].contiguous()
         shift_labels = inputs["input_ids"][..., 1:].contiguous()
-
+        # shift_labels = shift_labels.to(dtype=torch.float32)
+        
         loss_fct = torch.nn.CrossEntropyLoss(reduction='none', ignore_index=self.tokenizer.pad_token_id)
-        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)).view(
-            shift_labels.size())
+        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)).view(shift_labels.size())
+        # loss = torch.matmul(shift_labels, shift_logits)
+        # print(loss.size())
 
         if mask_length is not None:
             mask = torch.zeros_like(shift_labels)  # [batch,seqlen]
