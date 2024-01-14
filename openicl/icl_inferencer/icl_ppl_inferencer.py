@@ -157,11 +157,12 @@ class PPLInferencer(BaseInferencer):
                         cos_sim_list = [paired_cosine_distances(prompt_emb_list[0].reshape(1,-1), item.reshape(1,-1))[0] for item in prompt_emb_list[1:]]
                         idx_prompt = list(range(len(prompt_list_sep)-1))
                         n = len(prompt_emb_list)-1
-                        for i in range(n-1):
-                            for j in range(1, n-i-1):
-                                if cos_sim_list[j] > cos_sim_list[j+1]:
+                        for i in range(n):
+                            for j in range(0, n-i-1):
+                                if cos_sim_list[j] < cos_sim_list[j+1]:
                                     idx_prompt[j], idx_prompt[j+1] = idx_prompt[j+1], idx_prompt[j]
-                        idx_prompt = [0]+idx_prompt
+                                    cos_sim_list[j], cos_sim_list[j+1] = cos_sim_list[j+1], cos_sim_list[j]
+                        idx_prompt = [0]+[item+1 for item in idx_prompt]
                         sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
                 with torch.no_grad():
                     if normalizing_str is not None:
