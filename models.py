@@ -144,17 +144,18 @@ class MLP(torch.nn.Module):
 class wikiHowNet(nn.Module):
     def __init__(self):
         super(wikiHowNet, self).__init__()
-        '''
+        
         self.fc1 = nn.Linear(384, 64)
-        # init.normal_(self.fc1.weight, mean=1.0, std=0.30)
+        init.normal_(self.fc1.weight, mean=1.0, std=0.30)
         self.fc2 = nn.Linear(64, 1)
-        # init.normal_(self.fc2.weight, mean=1.0, std=0.30)
-        self.act1 = torch.nn.Softmax()
+        init.normal_(self.fc2.weight, mean=1.0, std=0.30)
+        # self.act1 = torch.nn.Softmax()
         # torch.nn.LeakyReLU()
-        '''
+        
         self.encode_model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-        self.pred_head = torch.nn.Sequential(torch.nn.Linear(384, 64),
-                                            torch.nn.Linear(64, 1),
+        self.pred_head = torch.nn.Sequential(self.fc1, #torch.nn.Linear(384, 64),
+                                            self.fc2, # torch.nn.Linear(64, 1),
+                                            torch.nn.LeakyReLU(),
                                             torch.nn.Softmax(dim=0))
         # self.temperature = nn.Parameter(torch.tensor(100.0, requires_grad=True))
 

@@ -56,8 +56,6 @@ class RandomRetriever(BaseRetriever):
         rtr_idx_list = []
         logger.info("Retrieving data for test set...")
         args = pa.parse_args()
-        
-        
         if self.NP_mode == "NP":
             dr = self.dataset_reader
             for _ in trange(len(self.test_ds), disable=not self.is_main_process):
@@ -87,8 +85,12 @@ class RandomRetriever(BaseRetriever):
                         idx = int(np.random.choice(num_idx, 1))
                         # print(self.dataset_reader.dataset["train"][idx][dr.output_column])
                         # print(label_list[i])
-                        if args.dataset in ["sst5", "sst2"]:
+                        if args.dataset in ["sst5", "sst2", "CR"]:
                             if self.dataset_reader.dataset["train"][idx][dr.output_column] == i:
+                                idx_list.append(idx)
+                                break
+                        if args.dataset in ["ag_news"]:
+                            if self.dataset_reader.dataset["train"][idx]['label'] == i:
                                 idx_list.append(idx)
                                 break
                         if args.dataset == "DeveloperOats/DBPedia_Classes":

@@ -178,7 +178,7 @@ class GenInferencerOutputHandler:
     def subprocess_write_to_json(self, output_json_filepath: str, output_json_filename: str):
         self.results_dict = {
             str(idx): {
-                'origin_prompt': self.origin_prompt_dict[str(idx)],
+                'origin_prompt': '', #self.origin_prompt_dict[str(idx)],
                 'output': self.output_dict[str(idx)],
                 'prediction': self.prediction_dict[str(idx)]
             } for idx in self.origin_prompt_dict.keys()

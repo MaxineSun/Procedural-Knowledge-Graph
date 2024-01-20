@@ -42,13 +42,13 @@ def parse_args():
     parser.add_argument('--NP_mode', nargs='?', default="None", help='choose the NP prompt examples shuffle mode') 
     parser.add_argument('--case', nargs='?', default="bi-class", help='choose the ICL case type') 
     parser.add_argument('--random_seed', type=int, default=42) 
-    parser.add_argument('--sequence_length', type=int, default=16) 
-    parser.add_argument('--data_classes', type=int, default=5) 
-    parser.add_argument('--parallel_id', type=int, default=2) 
-    parser.add_argument('--dataset', nargs='?', default="sst5", help='choose the dataset') 
-    parser.add_argument('--model', nargs='?', default='gpt2-xl', help='choose the model name') #gpt2-xl') EleutherAI/gpt-j-6b'
+    parser.add_argument('--sequence_length', type=int, default=8) 
+    parser.add_argument('--data_classes', type=int, default=14) 
+    parser.add_argument('--parallel_id', type=int, default=3) 
+    parser.add_argument('--dataset', nargs='?', default='dbpedia_14', help='choose the dataset')
+    parser.add_argument('--model', nargs='?', default='gpt2-xl', help='choose the model name') #gpt2-xl') EleutherAI/gpt-j-6b''NousResearch/Llama-2-7b-hf'
     
-    parser.add_argument('--data_dir', nargs='?', default='reverse_5_gpt2-xl_16', help='choose the file path name') 
+    parser.add_argument('--data_dir', nargs='?', default='sorted_5_gpt2-xl_8', help='choose the file path name') 
     parser.set_defaults(directed=False)
 
     return parser.parse_args()

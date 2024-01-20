@@ -13,6 +13,8 @@ from typing import List, Union, Optional
 from tqdm import tqdm
 from transformers import PretrainedConfig
 from accelerate import Accelerator
+from transformers import AutoTokenizer
+import numpy as np
 
 logger = get_logger(__name__)
 
@@ -57,7 +59,7 @@ class GenInferencer(BaseInferencer):
 
     def inference(self, retriever: BaseRetriever, ice_template: Optional[PromptTemplate] = None,
                   prompt_template: Optional[PromptTemplate] = None, output_json_filepath: Optional[str] = None,
-                  output_json_filename: Optional[str] = None, force_words=None) -> List:
+                  output_json_filename: Optional[str] = None, force_words=None, sorting_net_work=None, shuffle_mode=None) -> List:
         # 1. Preparation for output logs
         num = len(retriever.test_ds)
         output_handler = GenInferencerOutputHandler(num, self.accelerator)
@@ -77,6 +79,7 @@ class GenInferencer(BaseInferencer):
                                                                         max_model_token_num=self.max_model_token_num,
                                                                         ice_template=ice_template,
                                                                         prompt_template=prompt_template)
+        print(prompt_list)
         output_handler.save_orgin_prompts(prompt_list)
 
         # 4. Wrap prompts with Dataloader

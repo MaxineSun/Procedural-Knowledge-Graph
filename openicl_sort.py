@@ -15,9 +15,29 @@ def main(args):
     if args.case == "bi-class":
         # seqs = []
         # entropy = []
-        
-        score_list = []
+        f1_list = []        
+        acc_list = []
         count = [0]*args.sequence_length*args.data_classes
+        if args.dataset == "ag_news":
+            data = DatasetReader('sh0416/ag_news', input_columns=['description'], output_column='label', ds_size=128) 
+            template = PromptTemplate(template={
+                                                    1: '</E>Statement about World: </description>',
+                                                    2: '</E>Statement about Sports: </description>',
+                                                    3: '</E>Statement about Business: </description>',
+                                                    4: '</E>Statement about Science or Technology: </description>',
+                                            },
+                                    column_token_map={'description' : '</description>'},
+                                    ice_token='</E>'
+                    )
+        if args.dataset == "CR":
+            data = DatasetReader('SetFit/CR', input_columns=['text'], output_column='label', ds_size=128)
+            template = PromptTemplate(template={
+                                                    0: '</E>Negative Review: </text>',
+                                                    1: '</E>Positive Review: </text>',
+                                            },
+                                    column_token_map={'text' : '</text>'},
+                                    ice_token='</E>'
+                    )
         if args.dataset == "sst2":
             data = DatasetReader('gpt3mix/sst2', input_columns=['text'], output_column='label', ds_size=128)
             template = PromptTemplate(template={
@@ -49,10 +69,10 @@ def main(args):
         model = model.to('cuda')
         model.eval()
         
-        # while len(entropy)<(100*(args.sequence_length-args.data_classes)*(args.data_classes-1)):
+        # while len(entropy)<(50*(args.sequence_length-args.data_classes)*(args.data_classes-1)):
         #     seq = functional.random_seq(args.data_classes, args.sequence_length)
         #     tmp_entropy = functional.seq_entropy(seq)
-        #     if count[tmp_entropy]<100 and tmp_entropy>=args.data_classes:
+        #     if count[tmp_entropy]<50 and tmp_entropy>=args.data_classes:
         #         count[tmp_entropy] += 1
         #         seqs.append(seq)
         #         entropy.append(tmp_entropy)
@@ -69,7 +89,7 @@ def main(args):
         #     pickle.dump(seqs, fp)
         # fp.close()
         # return
-        
+
         entropy_name = "entropy_"+str(args.sequence_length)+"_"+str(args.data_classes)
         entropy_dir = dir/"scratch"/"data"/"diff_sort"/entropy_name
         with open(entropy_dir, "rb") as fp:
@@ -93,10 +113,10 @@ def main(args):
             elif args.model == 'NousResearch/Llama-2-7b-hf':
                 inferencer = PPLInferencer(model_name=args.model)
             predictions = inferencer.inference(retriever, ice_template=template, output_json_filename='sst', sorting_net_work=model, shuffle_mode=args.shuffle_mode)
-            score = AccEvaluator().score(predictions=predictions, references=data.references)
-            # score = f1_score(predictions, data.references, average='macro')
-            print(score)
-            score_list.append(score)
+            acc_score = AccEvaluator().score(predictions=predictions, references=data.references)
+            acc_list.append(acc_score['accuracy'])
+            f1score = f1_score(predictions, data.references, average='macro')
+            f1_list.append(f1score)
         
         end_time = time.time()
         duration = end_time - start_time
@@ -104,6 +124,11 @@ def main(args):
             
         dir_name = args.shuffle_mode+"_"+str(args.data_classes)+"_"+args.model+'_'+str(args.sequence_length)
         save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_100"/dir_name
+        if args.dataset == "CR":
+            save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_CR"/dir_name
+        if args.dataset == "ag_news":
+            save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_ag_news"/dir_name
+            
         if not save_dir.exists():
             save_dir.mkdir(parents=True, exist_ok=True)
             
@@ -112,11 +137,17 @@ def main(args):
             pickle.dump(entropy, fp)
         fp.close()
         
-        score_list_file_name = "score_list_"+str(args.parallel_id)
-        with open(save_dir/score_list_file_name, "wb") as fp:
-            pickle.dump(score_list, fp)
+        acc_list_file_name = "acc_list_"+str(args.parallel_id)
+        with open(save_dir/acc_list_file_name, "wb") as fp:
+            pickle.dump(acc_list, fp)
         fp.close()
         
+        f1_list_file_name = "f1_list_"+str(args.parallel_id)
+        with open(save_dir/f1_list_file_name, "wb") as fp:
+            pickle.dump(f1_list,fp)
+        fp.close()
+
+
     # if args.case == "translate":
     #     dataset = load_dataset("wmt16", 'de-en').map(lambda example: example['translation'])
     #     data = DatasetReader(dataset, input_columns=['de'], output_column='en')
