@@ -11,33 +11,34 @@ import torch
 
 
 def main(args):
-    # nltk.download('punkt')
-    # data = DatasetReader('gsm8k', name='main', input_columns=['question'], output_column='answer')
+    nltk.download('punkt')
+    data = DatasetReader('gsm8k', name='main', input_columns=['question'], output_column='answer')
     # template = PromptTemplate('</E> Question: </Q> \n Answer: </A>',
     #                           {'question':'</Q>', 'answer':'</A>'},
     #                           ice_token='</E>')
     # retriever = BM25Retriever(data, ice_num = 4)
     dir = pathlib.Path(__file__).resolve().parent.parent
-    save_dir = dir/"scratch"/"data"
+    save_dir = dir/"scratch"/"data"/"cot_icl"
     # with open(save_dir/"retriever_3", "wb") as fp:
     #     pickle.dump(retriever, fp)
     # fp.close()
-    # with open(save_dir/"retriever_1319", "rb") as fp:
+    # with open(save_dir/"retriever_3", "rb") as fp:
     #     retriever = pickle.load(fp)
     # fp.close()
     
-    # cot_list = ["Let's think step by step and put the answer after #### ."] #,
-    #             # "\nTherefore, the answer (arabic number) is"]
-    # inferencer = CoTInferencer(cot_list=cot_list, api_name='gpt-3.5-turbo-instruct')
-    # ori_predictions = inferencer.inference(retriever, ice_template=template)
-    # with open(save_dir/"predictions_gpt-3.5-turbo-instruct_sort", "wb") as fp:
-    #     pickle.dump(ori_predictions, fp)
-    # fp.close()
-    with open(save_dir/"json_list", "rb") as fp:
-        predictions = pickle.load(fp)
+    cot_list = ["Let's think step by step and put the answer after #### ."] 
+    inferencer = CoTInferencer(cot_list=cot_list, api_name='llama')
+    ori_predictions = inferencer.inference(retriever, ice_template=template)
+    with open(save_dir/"predictions_gpt-3.5-turbo-instruct_sort", "wb") as fp:
+        pickle.dump(ori_predictions, fp)
     fp.close()
-    # predictions = get_arabic_number(predictions)
-    # references = get_ref_arabic_number(data.references)
+    # with open(save_dir/"predictions_gpt-3.5-turbo-instruct", "rb") as fp:
+    #     predictions = pickle.load(fp)
+    # fp.close()
+    predictions = get_arabic_number(predictions)
+    references = get_ref_arabic_number(data.references)
+    print(predictions[:50])
+    # print(references[:50])
     # print(strict_acc(predictions, references))
     # print(soft_acc(predictions, references))
 

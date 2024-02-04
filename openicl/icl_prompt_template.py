@@ -53,7 +53,7 @@ class PromptTemplate:
         if self.ice_token is not None and self.ice_token in self.column_token_map.values():
             raise ValueError(f"There are duplicates between self.column_token_map.values() and self.ice_token")
 
-    def generate_ice_item(self, entry: Dict, label: Hashable) -> str:
+    def generate_ice_item(self, dataset, entry: Dict, label: Hashable) -> str:
         """Generate in-context example based on the provided :obj:`entry` data.
 
         Args:
@@ -79,7 +79,7 @@ class PromptTemplate:
                 tp = tp.replace(token, str(entry[key]))
         return tp
 
-    def generate_label_prompt_item(self, entry: Dict, ice: str, label: Hashable, remain_sep: Optional[bool] = False) -> str:
+    def generate_label_prompt_item(self, dataset, entry: Dict, ice: str, remain_sep: Optional[bool] = False) -> str:
         """Generate prompt based on :obj:`entry` data, :obj:`ice` in-context example, and the corresponding :obj:`label`.
 
         Args:
@@ -95,23 +95,24 @@ class PromptTemplate:
         Returns:
             :obj:`str`: The generated prompt.
         """
+        
         if self.ice_token is None:
             raise ValueError("PromptTemplate.ice_token should be not None when generates prompt")
-        # Select the corresponding template
-        tp = self.template[label] if isinstance(self.template, Dict) else self.template
-        # Remove sep token
-        if not remain_sep and self.sep_token is not None:
-            tp.replace(self.sep_token, '')
-        # Insert in-context examples
-        tp = tp.replace(self.ice_token, ice)
-        # Replace context token
         for key, token in self.column_token_map.items():
             if self.selected_column_map is not None and key == self.selected_column_name:
                 tp = tp.replace(token, str(self.selected_column_map[label]))
             else:
-                tp = tp.replace(token, str(entry[key]))
+                if dataset == "dbpedia_14":
+                    tp = ice+"Article: "+str(entry[key])+" Article type: "
+                if dataset == "ag_news":
+                    tp = ice+"News: "+str(entry[key])+" News type: "
+                if dataset == "CR":
+                    tp = ice+"Review: "+str(entry[key])+" Sentiment: "
+                if dataset == "sst5":
+                    tp = ice+"Review: "+str(entry[key])+" Sentiment: "
+                if dataset == "sst2":
+                    tp = ice+"Review: "+str(entry[key])+" Sentiment: "
         return tp
-
 
     def generate_item(self, entry: Dict, output_field: Optional[Hashable] = None,
                       output_field_replace_token: Optional[str] = '',

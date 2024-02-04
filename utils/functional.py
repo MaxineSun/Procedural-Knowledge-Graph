@@ -247,7 +247,8 @@ def temperature_scaled_softmax(logits, temperature=1.0):
     return torch.softmax(logits, dim=1)
 
 
-def random_seq(class_num, length):
+def random_seq(class_num, length,random_seed):
+    np.random.seed(random_seed)
     return list(np.random.choice(list(range(class_num)), length))
     
 

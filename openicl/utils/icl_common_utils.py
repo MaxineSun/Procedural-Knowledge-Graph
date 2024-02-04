@@ -98,4 +98,37 @@ def shuffle_examples(entry):
 def prompt_join(sep_prompt_list, idx):
     prompt_list = [sep_prompt_list[i] for i in idx]
     return '\n'.join(prompt_list)
+
+def get_labbels(dataset, llm):
+    if dataset == "dbpedia_14":
+        # label_tokenids = ["company", "school", "artist", "player", "politics", "transport", "building", "nature", "village", "animal", "plant", "album", "film", "book"]
+        if llm == "NousResearch/Llama-2-7b-hf":
+            label_tokenids = [5001, 3762, 7664, 4847, 22661, 8608, 5214, 5469, 5720, 13019, 8024, 3769, 2706, 3143]
+        if llm in ["gpt-j-6b", "gpt2-xl"]:
+            label_tokenids = [39722, 1524, 6802, 2137, 4819, 4839, 2615, 3450, 7404, 5044, 4618, 5062, 2646, 1492]
+    if dataset == "ag_news":
+        # label_tokenids = ["word", "sports", "business", "science"]
+        if llm == "NousResearch/Llama-2-7b-hf":
+            label_tokenids = [1734, 14717, 5381, 10466]
+        if llm in ["gpt-j-6b", "gpt2-xl"]:
+            label_tokenids = [4775, 5701, 1597, 3783]
+    if dataset == "CR":
+        # label_tokenids = ["negative", "positive"]
+        if llm == "NousResearch/Llama-2-7b-hf":
+            label_tokenids = [8178, 6374]
+        if llm in ["gpt-j-6b", "gpt2-xl"]:
+            label_tokenids = [4633, 3967]
+    if dataset == "sst2":
+        # label_tokenids = ["negative", "positive"]
+        if llm == "NousResearch/Llama-2-7b-hf":
+            label_tokenids = [6374, 8178]
+        if llm in ["gpt-j-6b", "gpt2-xl"]:
+            label_tokenids = [3967, 4633]
+    if dataset == "sst5":
+        # label_tokenids = ["poor", "bad", "normal", "great", "perfect"]
+        if llm == "NousResearch/Llama-2-7b-hf":
+            label_tokenids = [16403, 4319, 20759, 1781, 2107]
+        if llm in ["gpt-j-6b", "gpt2-xl"]:
+            label_tokenids = [3595, 2089, 3487, 1049, 2818]
+    return label_tokenids
     

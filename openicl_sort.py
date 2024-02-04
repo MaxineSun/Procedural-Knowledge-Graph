@@ -17,49 +17,69 @@ def main(args):
         # entropy = []
         f1_list = []        
         acc_list = []
-        count = [0]*args.sequence_length*args.data_classes
+        # count = [0]*args.sequence_length*args.data_classes
         if args.dataset == "ag_news":
-            data = DatasetReader('sh0416/ag_news', input_columns=['description'], output_column='label', ds_size=128) 
+            data = DatasetReader('sh0416/ag_news', input_columns=['description'], output_column='label', ds_size=128, random_seed=args.random_seed) 
             template = PromptTemplate(template={
-                                                    1: '</E>Statement about World: </description>',
-                                                    2: '</E>Statement about Sports: </description>',
-                                                    3: '</E>Statement about Business: </description>',
-                                                    4: '</E>Statement about Science or Technology: </description>',
+                                                    1: '</E>News: </description> News type: World',
+                                                    2: '</E>News: </description> News type: Sports',
+                                                    3: '</E>News: </description> News type: Business',
+                                                    4: '</E>News: </description> News type: Science',
                                             },
                                     column_token_map={'description' : '</description>'},
                                     ice_token='</E>'
                     )
         if args.dataset == "CR":
-            data = DatasetReader('SetFit/CR', input_columns=['text'], output_column='label', ds_size=128)
+            data = DatasetReader('SetFit/CR', input_columns=['text'], output_column='label', ds_size=128, random_seed=args.random_seed)
             template = PromptTemplate(template={
-                                                    0: '</E>Negative Review: </text>',
-                                                    1: '</E>Positive Review: </text>',
+                                                    0: '</E>Review: </text> Sentiment: negative',
+                                                    1: '</E>Review: </text> Sentiment: positive',
                                             },
                                     column_token_map={'text' : '</text>'},
                                     ice_token='</E>'
                     )
         if args.dataset == "sst2":
-            data = DatasetReader('gpt3mix/sst2', input_columns=['text'], output_column='label', ds_size=128)
+            data = DatasetReader('gpt3mix/sst2', input_columns=['text'], output_column='label', ds_size=128, random_seed=args.random_seed)
             template = PromptTemplate(template={
-                                                    0: '</E>Positive Movie Review: </text>',
-                                                    1: '</E>Negative Movie Review: </text>',
+                                                    0: '</E>Review: </text> Sentiment: positive',
+                                                    1: '</E>Review: </text> Sentiment: negative',
                                             },
                                     column_token_map={'text' : '</text>'},
                                     ice_token='</E>'
                     )
         if args.dataset == "sst5":
-            data = DatasetReader('SetFit/sst5', input_columns=['text'], output_column='label', ds_size=128)
+            data = DatasetReader('SetFit/sst5', input_columns=['text'], output_column='label', ds_size=128, random_seed=args.random_seed)
             template = PromptTemplate(template={
-                                                    0: '</E>Very negative Movie Review: </text>',
-                                                    1: '</E>Negative Movie Review: </text>',
-                                                    2: '</E>Neutral Movie Review: </text>',
-                                                    3: '</E>Positive Movie Review: </text>',
-                                                    4: '</E>Very positive Movie Review: </text>'
+                                                    0: '</E>Review: </text> Sentiment: terrible',
+                                                    1: '</E>Review: </text> Sentiment: bad',
+                                                    2: '</E>Review: </text> Sentiment: okay',
+                                                    3: '</E>Review: </text> Sentiment: good',
+                                                    4: '</E>Review: </text> Sentiment: great'
                                             },
                                     column_token_map={'text' : '</text>'},
                                     ice_token='</E>'
                     )
-
+        if args.dataset == "dbpedia_14":
+            data = DatasetReader('dbpedia_14', input_columns=['content'], output_column='label', ds_size=128, random_seed=args.random_seed)
+            template = PromptTemplate(template={
+                                                    0: '</E>Article: </content> Article type: Company',
+                                                    1: '</E>Article: </content> Article type: School',
+                                                    2: '</E>Article: </content> Article type: Artist',
+                                                    3: '</E>Article: </content> Article type: Player',
+                                                    4: '</E>Article: </content> Article type: Politics',
+                                                    5: '</E>Article: </content> Article type: Transport',
+                                                    6: '</E>Article: </content> Article type: Building',
+                                                    7: '</E>Article: </content> Article type: Nature',
+                                                    8: '</E>Article: </content> Article type: Village',
+                                                    9: '</E>Article: </content> Article type: Animal',
+                                                    10: '</E>Article: </content> Article type: Plant',
+                                                    11: '</E>Article: </content> Article type: Album',
+                                                    12: '</E>Article: </content> Article type: Film',
+                                                    13: '</E>Article: </content> Article type: Book'
+                                            },
+                                    column_token_map={'content' : '</content>'},
+                                    ice_token='</E>'
+                    )
         model = wikiHowNet()
         dir = pathlib.Path(__file__).resolve().parent.parent
         model_dir = dir/"scratch"/"data"/"diff_sort"/"model_"
@@ -88,7 +108,7 @@ def main(args):
         # with open("../scratch/data/diff_sort/seqs_"+str(args.sequence_length)+"_"+str(args.data_classes), "wb") as fp:
         #     pickle.dump(seqs, fp)
         # fp.close()
-        # return
+        # return S
 
         entropy_name = "entropy_"+str(args.sequence_length)+"_"+str(args.data_classes)
         entropy_dir = dir/"scratch"/"data"/"diff_sort"/entropy_name
@@ -111,12 +131,17 @@ def main(args):
             elif args.model == 'gpt2-xl':
                 inferencer = PPLInferencer(model_name='gpt2-xl') 
             elif args.model == 'NousResearch/Llama-2-7b-hf':
-                inferencer = PPLInferencer(model_name=args.model)
-            predictions = inferencer.inference(retriever, ice_template=template, output_json_filename='sst', sorting_net_work=model, shuffle_mode=args.shuffle_mode)
+                inferencer = PPLInferencer(model_name='NousResearch/Llama-2-7b-hf')
+            
+            predictions = inferencer.inference(retriever, ice_template=template, dataset=args.dataset, sorting_net_work=model, shuffle_mode=args.shuffle_mode, llm=args.model)
+            print(predictions)
+            print(data.references)
             acc_score = AccEvaluator().score(predictions=predictions, references=data.references)
+            print("Acc: ",acc_score['accuracy'])
             acc_list.append(acc_score['accuracy'])
             f1score = f1_score(predictions, data.references, average='macro')
             f1_list.append(f1score)
+            print("F1: ", f1score)
         
         end_time = time.time()
         duration = end_time - start_time
@@ -128,6 +153,8 @@ def main(args):
             save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_CR"/dir_name
         if args.dataset == "ag_news":
             save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_ag_news"/dir_name
+        if args.dataset == "dbpedia_14":
+            save_dir = dir/"scratch"/"data"/"diff_sort"/"plot_dbpedia_14"/dir_name
             
         if not save_dir.exists():
             save_dir.mkdir(parents=True, exist_ok=True)

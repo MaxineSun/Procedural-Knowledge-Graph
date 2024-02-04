@@ -79,7 +79,7 @@ class CoTInferencer(BaseInferencer):
         # with open(save_dir/"ice_idx_list_1", "wb") as fp:
         #     pickle.dump(ice_idx_list, fp)
         # fp.close()
-        with open(save_dir/"ice_idx_list_1319", "rb") as fp:
+        with open(save_dir/"ice_idx_list_1", "rb") as fp:
             ice_idx_list = pickle.load(fp)
         fp.close()
         cot_list_len = len(self.cot_list)

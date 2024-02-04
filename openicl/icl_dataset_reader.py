@@ -42,7 +42,8 @@ class DatasetReader:
                  input_output_template: Optional[PromptTemplate] = None,
                  ds_size: Union[None, int, float] = None,
                  split: Optional[NamedSplit] = None,
-                 test_split: Optional[str] = 'test'
+                 test_split: Optional[str] = 'test',
+                 random_seed=None
                  ) -> None:
         self.input_columns = _check_type_list(input_columns, [List, str])
         if isinstance(self.input_columns, str):
@@ -63,10 +64,10 @@ class DatasetReader:
             self.dataset = self.dataset[split]
         if self.ds_size is not None:
             if isinstance(self.dataset, Dataset):
-                self.dataset = load_partial_dataset(dataset, size=self.ds_size)
+                self.dataset = load_partial_dataset(dataset, size=self.ds_size, random_seed=random_seed)
             if isinstance(self.dataset, DatasetDict):
                 for ds_name in self.dataset.keys():
-                    self.dataset[ds_name] = load_partial_dataset(self.dataset[ds_name], size=self.ds_size)
+                    self.dataset[ds_name] = load_partial_dataset(self.dataset[ds_name], size=self.ds_size, random_seed=random_seed)
         if isinstance(self.dataset, DatasetDict):
             if test_split in self.dataset.keys():
                 self.references = self.dataset[test_split][self.output_column]
@@ -203,13 +204,13 @@ class DatasetReader:
         return f"DatasetReader({{\n    dataset: {self.dataset},\n    input_columns: {self.input_columns},\n    output_columns: {self.output_column}\n}})"
 
 
-def load_partial_dataset(dataset: Dataset, size: Optional[Union[int, float]] = None) -> Dataset:
+def load_partial_dataset(dataset: Dataset, size: Optional[Union[int, float]] = None, random_seed=None) -> Dataset:
     total_size = len(dataset)
     if size >= total_size or size <= 0:
         return dataset
     if size > 0 and size < 1:
         size = int(size * total_size)
-    rand = random.Random(x=size)
+    rand = random.Random(random_seed)
     index_list = list(range(total_size))
     rand.shuffle(index_list)
     dataset = dataset.select(index_list[:size])

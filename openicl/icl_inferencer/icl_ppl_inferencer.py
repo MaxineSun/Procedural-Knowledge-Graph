@@ -8,6 +8,7 @@ from openicl.icl_evaluator import *
 from openicl.icl_inferencer.icl_base_inferencer import BaseInferencer, PPLInferencerOutputHandler
 from openicl.utils.logging import get_logger
 from openicl.utils.api_service import *
+from openicl.utils.icl_common_utils import get_labbels
 from typing import List, Union, Optional
 from tqdm import tqdm
 from tqdm import trange
@@ -57,20 +58,12 @@ class PPLInferencer(BaseInferencer):
                          output_json_filepath, output_json_filename, api_name, model_parallel, **kwargs)
         self.labels = labels
 
-    def inference(self, retriever: BaseRetriever, ice_template: Optional[PromptTemplate] = None,
+    def inference(self, retriever: BaseRetriever, ice_template: Optional[PromptTemplate] = None, dataset=None,
                   prompt_template: Optional[PromptTemplate] = None, output_json_filepath: Optional[str] = None,
-                  output_json_filename: Optional[str] = None, normalizing_str: Optional[str] = None, sorting_net_work=None, shuffle_mode=None) -> List:
+                  output_json_filename: Optional[str] = None, normalizing_str: Optional[str] = None, sorting_net_work=None, shuffle_mode=None, llm=None) -> List:
         # 1. Preparation for output logs
-        output_handler = PPLInferencerOutputHandler(self.accelerator)
-
         sub_predictions = []
-        ppl = []
         ice = []
-
-        if output_json_filepath is None:
-            output_json_filepath = self.output_json_filepath
-        if output_json_filename is None:
-            output_json_filename = self.output_json_filename
         
         # 2. Get results of retrieval process
         ice_idx_list = retriever.retrieve()
@@ -78,157 +71,138 @@ class PPLInferencer(BaseInferencer):
         # 3. Get labels of all the classes
         if self.labels is None:
             labels = retriever.get_labels(ice_template=ice_template, prompt_template=prompt_template)
+            self.labels = labels
         else:
             labels = self.labels
         
         # 4. Generate in-context examples for testing inputs
         for idx in range(len(ice_idx_list)):
-            ice.append(retriever.generate_ice(ice_idx_list[idx], ice_template=ice_template))
-        output_handler.save_ice(ice)
+            ice.append(retriever.generate_ice(dataset, ice_idx_list[idx], ice_template=ice_template))
 
         # 5. Calculating PPL for prompts in each label's class
-        for label in labels:
-            index = 0
-            prompt_list = []
-            sub_ppl_list = []
-            normalizing_prompt_list = []
-            context_length_list = []
+        index = 0
+        prompt_list = []
+        sub_ppl_list = []
+        normalizing_prompt_list = []
+        context_length_list = []
 
-            # 5.1 Generate prompts of current label and truncate 
-            for idx in range(len(ice_idx_list)):
-                prompt = retriever.generate_label_prompt(idx, ice[idx], label, ice_template=ice_template,
-                                                         prompt_template=prompt_template,
-                                                         remain_sep=normalizing_str is not None)
-                if self.max_model_token_num is not None and self.api_name != 'gpt3':
+        # 5.1 Generate prompts of current label and truncate 
+        for idx in range(len(ice_idx_list)):
+            prompt = retriever.generate_label_prompt(dataset, idx, ice[idx], ice_template=ice_template,
+                                                        prompt_template=prompt_template,
+                                                        remain_sep=normalizing_str is not None)
+            if self.max_model_token_num is not None and self.api_name != 'gpt3':
+                prompt_token_num = self.get_input_token_num(prompt)
+                while len(ice_idx_list[idx]) > 0 and prompt_token_num > self.max_model_token_num:
+                    ice_idx_list[idx] = ice_idx_list[idx][:-1]
+                    ice[idx] = retriever.generate_ice(dataset, ice_idx_list[idx], ice_template=ice_template)
+                    prompt = retriever.generate_label_prompt(dataset, idx, ice[idx], label, ice_template=ice_template,
+                                                                prompt_template=prompt_template)
                     prompt_token_num = self.get_input_token_num(prompt)
-                    while len(ice_idx_list[idx]) > 0 and prompt_token_num > self.max_model_token_num:
-                        ice_idx_list[idx] = ice_idx_list[idx][:-1]
-                        ice[idx] = retriever.generate_ice(ice_idx_list[idx], ice_template=ice_template)
-                        prompt = retriever.generate_label_prompt(idx, ice[idx], label, ice_template=ice_template,
-                                                                 prompt_template=prompt_template)
-                        prompt_token_num = self.get_input_token_num(prompt)
 
-                if normalizing_str is not None:
-                    prompt_sep = prompt
-                    if prompt_template is not None:
-                        sep_token = prompt_template.sep_token
-                    else:
-                        sep_token = ice_template.sep_token
-                    sep_pos = prompt_sep.find(sep_token)
-                    context = prompt_sep[0:sep_pos]
-                    answer = prompt_sep[sep_pos:].replace(sep_token, '')
-                    prompt = context + answer
-                    normalizing_prompt = normalizing_str + answer
-
-                    context_length_list.append(self.get_input_token_num(context))
-                    normalizing_prompt_list.append(normalizing_prompt)
-                prompt_list.append(prompt)
-            
             if normalizing_str is not None:
-                normalizing_str_len = self.get_input_token_num(normalizing_str)
-            
-            # 5.2 Get PPL
-            logger.info(f"Calculating PPL for prompts labeled '{label}'")
-            for idx in trange(0, len(prompt_list), self.batch_size, disable=not self.is_main_process):
-                sub_prompt_list = prompt_list[idx:idx + self.batch_size]
-                if sub_prompt_list != []:
-                    if shuffle_mode == "sorted":
-                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
-                        tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-                        encoded_sqs = tokenizer(prompt_list_sep[:-1], padding=True, truncation=True, max_length=128, return_tensors='pt')
-                        encoded_sqs = encoded_sqs.to('cuda')
-                        _, perm_matrix = sorting_net_work(encoded_sqs)
-                        idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda')
-                        idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist()
-                        idx_prompt += [len(encoded_sqs['input_ids'])]
-                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
-                    if shuffle_mode == "reverse":
-                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
-                        idx_prompt = list(range(len(prompt_list_sep)-1))
-                        idx_prompt.reverse()
-                        idx_prompt += [len(prompt_list_sep)-1]
-                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
-                    if shuffle_mode == "bubble":
-                        dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
-                        model_save_path = dir/"scratch"/"data"/"nlisentence-transformers-all-mpnet-base-v2"
-                        nli_model = SentenceTransformer(model_save_path)
-                        prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
-                        prompt_emb_list = [nli_model.encode(item) for item in prompt_list_sep]
-                        cos_sim_list = [paired_cosine_distances(prompt_emb_list[0].reshape(1,-1), item.reshape(1,-1))[0] for item in prompt_emb_list[1:]]
-                        idx_prompt = list(range(len(prompt_list_sep)-1))
-                        n = len(prompt_emb_list)-1
-                        for i in range(n):
-                            for j in range(0, n-i-1):
-                                if cos_sim_list[j] < cos_sim_list[j+1]:
-                                    idx_prompt[j], idx_prompt[j+1] = idx_prompt[j+1], idx_prompt[j]
-                                    cos_sim_list[j], cos_sim_list[j+1] = cos_sim_list[j+1], cos_sim_list[j]
-                        idx_prompt = [0]+[item+1 for item in idx_prompt]
-                        sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
-                with torch.no_grad():
-                    if normalizing_str is not None:
-                        sub_context_length_list = context_length_list[idx:idx + self.batch_size]
-                        sub_normalizing_prompt_list = normalizing_prompt_list[idx:idx + self.batch_size]
-                    if normalizing_str is not None:
-                        res1 = self.__get_ppl(input_texts=sub_prompt_list, mask_length=sub_context_length_list)
-                        res2 = self.__get_ppl(input_texts=sub_normalizing_prompt_list,
-                                                mask_length=[normalizing_str_len for i in range(len(sub_prompt_list))]
-                                                )
-                        sub_res = res1 - res2
-                    else:
-                        sub_res = self.__get_ppl(sub_prompt_list).tolist()
-                    
-                for res, prompt in zip(sub_res, sub_prompt_list):
-                    sub_ppl_list.append(res)
-                    output_handler.save_prompt_and_ppl(label, prompt[len(ice[idx]):], prompt, res, index)
-                    index = index + 1
-            ppl.append(sub_ppl_list)
+                prompt_sep = prompt
+                if prompt_template is not None:
+                    sep_token = prompt_template.sep_token
+                else:
+                    sep_token = ice_template.sep_token
+                sep_pos = prompt_sep.find(sep_token)
+                context = prompt_sep[0:sep_pos]
+                answer = prompt_sep[sep_pos:].replace(sep_token, '')
+                prompt = context + answer
+                normalizing_prompt = normalizing_str + answer
+
+                context_length_list.append(self.get_input_token_num(context))
+                normalizing_prompt_list.append(normalizing_prompt)
+            prompt_list.append(prompt)
         
+        if normalizing_str is not None:
+            normalizing_str_len = self.get_input_token_num(normalizing_str)
+        
+        # 5.2 Get PPL
+        for idx in trange(0, len(prompt_list), self.batch_size, disable=not self.is_main_process):
+            sub_prompt_list = prompt_list[idx:idx + self.batch_size]
+            if sub_prompt_list != []:
+                if shuffle_mode == "ori":
+                    prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                    idx_prompt = torch.tensor(list(range(len(prompt_list_sep))))
+                    torch.manual_seed(42)
+                    shuffled_indices = torch.randperm(len(idx_prompt)-1)
+                    idx_prompt[:-1] = idx_prompt[:-1][shuffled_indices]
+                    sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                if shuffle_mode == "sorted":
+                    prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                    
+                    tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+                    encoded_sqs = tokenizer(prompt_list_sep[:-1], padding=True, truncation=True, max_length=128, return_tensors='pt')
+                    encoded_sqs = encoded_sqs.to('cuda')
+                    _, perm_matrix = sorting_net_work(encoded_sqs)
+                    
+                    idx_prompt = torch.tensor(list(range(len(encoded_sqs['input_ids']))), dtype=torch.float32).to('cuda')
+                    idx_prompt = torch.argsort(idx_prompt@perm_matrix).tolist()
+                    idx_prompt += [len(encoded_sqs['input_ids'])]
+                    
+                    sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                if shuffle_mode == "reverse":
+                    prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                    idx_prompt = list(range(len(prompt_list_sep)-1))
+                    idx_prompt.reverse()
+                    idx_prompt += [len(prompt_list_sep)-1]
+                    sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                if shuffle_mode == "bubble":
+                    dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+                    model_save_path = dir/"scratch"/"data"/"nlisentence-transformers-all-mpnet-base-v2"
+                    nli_model = SentenceTransformer(model_save_path)
+                    prompt_list_sep = self.prompt_sep(sub_prompt_list[0])
+                    prompt_emb_list = [nli_model.encode(item) for item in prompt_list_sep]
+                    cos_sim_list = [paired_cosine_distances(prompt_emb_list[0].reshape(1,-1), item.reshape(1,-1))[0] for item in prompt_emb_list[1:]]
+                    idx_prompt = list(range(len(prompt_list_sep)-1))
+                    n = len(prompt_emb_list)-1
+                    for i in range(n):
+                        for j in range(0, n-i-1):
+                            if cos_sim_list[j] < cos_sim_list[j+1]:
+                                idx_prompt[j], idx_prompt[j+1] = idx_prompt[j+1], idx_prompt[j]
+                                cos_sim_list[j], cos_sim_list[j+1] = cos_sim_list[j+1], cos_sim_list[j]
+                    idx_prompt += [len(prompt_list_sep)-1]
+                    sub_prompt_list = [self.prompt_join(prompt_list_sep, idx_prompt)]
+                    
+            with torch.no_grad():
+                if normalizing_str is not None:
+                    sub_context_length_list = context_length_list[idx:idx + self.batch_size]
+                    sub_normalizing_prompt_list = normalizing_prompt_list[idx:idx + self.batch_size]
+                    res1 = self.__get_ppl(dataset, input_texts=sub_prompt_list, mask_length=sub_context_length_list)
+                    res2 = self.__get_ppl(dataset, input_texts=sub_normalizing_prompt_list,
+                                            mask_length=[normalizing_str_len for i in range(len(sub_prompt_list))]
+                                            )
+                    sub_res = res1 - res2
+                else:
+                    sub_res = self.__get_ppl(dataset, sub_prompt_list, llm).tolist()
+                    
+            for res, prompt in zip(sub_res, sub_prompt_list):
+                sub_ppl_list.append(res)
+                index = index + 1
         
         # 6. Get lowest PPL class as predictions
-        ppl = list(zip(*ppl))
-        for single_ppl in ppl:
-            sub_predictions.append(labels[single_ppl.index(min(single_ppl))])
-        output_handler.save_predictions(sub_predictions)
+        for single_ppl in sub_ppl_list:
+            sub_predictions.append(labels[single_ppl.index(max(single_ppl))])
+        return sub_predictions
 
-        # 7. Output
-        output_handler.subprocess_write_to_json(output_json_filepath, output_json_filename)
-        if self.accelerator is not None:
-            self.accelerator.wait_for_everyone()
-        output_handler.merge_to_main_process(output_json_filepath, output_json_filename)
-        output_handler.write_to_json(output_json_filepath, output_json_filename)
-        # print(type(output_handler.results_dict.values()))
-        return [sample['prediction'] for sample in output_handler.results_dict.values()]
-
-    def __get_ppl(self, input_texts: List[str], mask_length=None):
+    def __get_ppl(self, dataset, input_texts: List[str], llm=None, mask_length=None):
         if self.call_api:
             return api_get_ppl(self.api_name, input_texts)
         self.tokenizer.padding_side = "right"
         inputs = self.tokenizer(input_texts, padding=True, return_tensors='pt', truncation=True)
-        # print(self.model)
         inputs = {k: v.to(self.model.device) for k, v in inputs.items() if k in ['input_ids', 'attention_mask']}
-        outputs = self.model(**inputs)
-        # outputs = model(**inputs, labels=inputs["input_ids"]).logits.softmax(-1)[:, -1, :][:,label_tokenids]
-        shift_logits = outputs.logits[..., :-1, :].contiguous()
-        shift_labels = inputs["input_ids"][..., 1:].contiguous()
-        # shift_labels = shift_labels.to(dtype=torch.float32)
-        
-        loss_fct = torch.nn.CrossEntropyLoss(reduction='none', ignore_index=self.tokenizer.pad_token_id)
-        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)).view(shift_labels.size())
-        # loss = torch.matmul(shift_labels, shift_logits)
-        # print(loss.size())
+        label_tokenids = get_labbels(dataset,llm)
+        # print(prompt_label)
+        # label_tokenids = self.tokenizer.encode("\n".join(prompt_label), add_special_tokens=False)
+        # tmp = self.tokenizer.encode("\n")
+        # while tmp in label_tokenids:
+        #     label_tokenids.remove(tmp)
+        # print(label_tokenids)
 
-        if mask_length is not None:
-            mask = torch.zeros_like(shift_labels)  # [batch,seqlen]
-            for i in range(len(mask)):
-                for j in range(mask_length[i] - 1, len(mask[i])):
-                    mask[i][j] = 1
-            loss = loss * mask
-
-        lens = (inputs["input_ids"] != self.tokenizer.pad_token_id).sum(-1).cpu().numpy()
-        if mask_length is not None:
-            lens -= np.array(mask_length)
-        ce_loss = loss.sum(-1).cpu().detach().numpy() / lens
-        return ce_loss
+        loss = self.model(**inputs, labels=inputs["input_ids"]).logits.softmax(-1)[:, -1, :][:,label_tokenids]
+        return loss
 
     def prompt_sep(self, prompt_list):
         return prompt_list.split("\n")

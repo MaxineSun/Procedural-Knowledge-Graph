@@ -84,7 +84,7 @@ class BaseRetriever:
             labels = list(set(self.test_ds[self.dataset_reader.output_column]))
         return labels
 
-    def generate_ice(self, idx_list: List[int], ice_template: Optional[PromptTemplate] = None) -> str:
+    def generate_ice(self, dataset, idx_list: List[int], ice_template: Optional[PromptTemplate] = None) -> str:
         generated_ice_list = []
         dr = self.dataset_reader
         for idx in idx_list:
@@ -93,8 +93,9 @@ class BaseRetriever:
                                                             [self.index_ds[idx][ctx] for ctx in dr.input_columns] + [
                                                                 self.index_ds[idx][dr.output_column]]))))
             else:
+
                 generated_ice_list.append(
-                    ice_template.generate_ice_item(self.index_ds[idx], self.index_ds[idx][dr.output_column]))
+                    ice_template.generate_ice_item(dataset, self.index_ds[idx], self.index_ds[idx][dr.output_column])) 
         generated_ice = self.ice_separator.join(generated_ice_list) + self.ice_eos_token
 
         return generated_ice
@@ -105,8 +106,7 @@ class BaseRetriever:
         labels = []
         if prompt_template is not None and isinstance(prompt_template.template, Dict):
             labels = list(prompt_template.template.keys())[:]
-        elif ice_template is not None and isinstance(ice_template.template,
-                                                     Dict) and ice_template.ice_token is not None:
+        elif ice_template is not None and isinstance(ice_template.template, Dict) and ice_template.ice_token is not None:
             labels = list(ice_template.template.keys())[:]
         else:
             labels = list(set(self.test_ds[self.dataset_reader.output_column]))
@@ -114,12 +114,12 @@ class BaseRetriever:
             prompt_list.append(self.generate_label_prompt(idx, ice, label))
         return prompt_list, labels
 
-    def generate_label_prompt(self, idx: int, ice: str, label, ice_template: Optional[PromptTemplate] = None,
+    def generate_label_prompt(self, dataset, idx: int, ice: str, ice_template: Optional[PromptTemplate] = None,
                               prompt_template: Optional[PromptTemplate] = None, remain_sep: Optional[bool] = False) -> str:
         if prompt_template is not None:
-            return prompt_template.generate_label_prompt_item(self.test_ds[idx], ice, label, remain_sep) + self.prompt_eos_token
+            return prompt_template.generate_label_prompt_item(dataset, self.test_ds[idx], ice, remain_sep) + self.prompt_eos_token
         elif ice_template is not None and ice_template.ice_token is not None:
-            return ice_template.generate_label_prompt_item(self.test_ds[idx], ice, label, remain_sep) + self.prompt_eos_token
+            return ice_template.generate_label_prompt_item(dataset, self.test_ds[idx], ice, remain_sep) + self.prompt_eos_token
         else:
             prefix_prompt = ' '.join(
                 list(map(str, [self.test_ds[idx][ctx] for ctx in self.dataset_reader.input_columns])))
