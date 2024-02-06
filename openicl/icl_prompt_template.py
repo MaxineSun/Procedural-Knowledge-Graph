@@ -53,7 +53,7 @@ class PromptTemplate:
         if self.ice_token is not None and self.ice_token in self.column_token_map.values():
             raise ValueError(f"There are duplicates between self.column_token_map.values() and self.ice_token")
 
-    def generate_ice_item(self, dataset, entry: Dict, label: Hashable) -> str:
+    def generate_ice_item(self, entry: Dict, label: Hashable) -> str:
         """Generate in-context example based on the provided :obj:`entry` data.
 
         Args:
@@ -77,6 +77,8 @@ class PromptTemplate:
                 tp = tp.replace(token, str(self.selected_column_map[label]))
             else:
                 tp = tp.replace(token, str(entry[key]))
+        print(tp)
+        print(a)
         return tp
 
     def generate_label_prompt_item(self, dataset, entry: Dict, ice: str, remain_sep: Optional[bool] = False) -> str:

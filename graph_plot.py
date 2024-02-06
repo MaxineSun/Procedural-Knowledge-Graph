@@ -8,186 +8,188 @@ import pathlib
 def main(args):
     dir = pathlib.Path(__file__).resolve().parent.parent
     dir = dir/"scratch"/"data"/"diff_sort"/"plot_100"
-    if args.dataset == "sst5" and args.model == 'gpt2-xl':
-        with open(dir/"ori_5_gpt2-xl_8"/"entropy", "rb") as fp:
-            x_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"ori_5_gpt2-xl_8"/"f1_list", "rb") as fp:
-            y_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_5_gpt2-xl_8"/"entropy", "rb") as fp:
-            x_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_5_gpt2-xl_8"/"f1_list", "rb") as fp:
-            y_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"bubble_5_gpt2-xl_8"/"entropy", "rb") as fp:
-            x_bubble = pickle.load(fp)
-        fp.close()
-        with open(dir/"bubble_5_gpt2-xl_8"/"f1_list", "rb") as fp:
-            y_bubble = pickle.load(fp)
-        fp.close()
-        y_ori = [item for item in y_ori]
-        y_sorted = [item for item in y_sorted]
-        y_bubble = [item for item in y_bubble]
-        plot_ori(x_ori, y_ori)
-        plot_sort(x_sorted, y_sorted)
-        plot_bubble(x_bubble, y_bubble)
-        plt.title('sst5_gpt2-xl')
-        plt.xlabel('entropy')
-        plt.ylabel('F1')
-        plt.legend(fontsize=6)
-        plt.savefig('sst5_gpt2-xl_8.png')
-        
-    if args.dataset == "sst5" and args.model == 'EleutherAI/gpt-j-6b':
-        with open(dir/"ori_5_gpt-j-6b_16"/"entropy", "rb") as fp:
-            x_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"ori_5_gpt-j-6b_16"/"score_list", "rb") as fp:
-            y_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_5_gpt-j-6b_16"/"entropy", "rb") as fp:
-            x_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_5_gpt-j-6b_16"/"score_list", "rb") as fp:
-            y_sorted = pickle.load(fp)
-        fp.close()
-        # with open(dir/"bubble_5_gpt-j-6b_16"/"entropy", "rb") as fp:
-        #     x_bubble = pickle.load(fp)
-        # fp.close()
-        # with open(dir/"bubble_5_gpt-j-6b_16"/"score_list", "rb") as fp:
-        #     y_bubble = pickle.load(fp)
-        # fp.close()
-        plt.figure(figsize=(15, 6))
-        plot_ori(x_ori, y_ori)
-        plot_sort(x_sorted, y_sorted)
-        # plot_bubble(x_bubble, y_bubble)
-        plt.title('sst5_gpt-j-6b')
-        plt.xlabel('entropy')
-        plt.ylabel('accuracy')
-        plt.legend(fontsize=6)
-        plt.savefig('sst5_gpt-j-6b_100.png')
     
-    if args.dataset == "sst5" and args.model == 'NousResearch/Llama-2-7b-hf':
-        with open(dir/"ori_5_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    if args.dataset == "sst2" and args.model == 'gpt-j-6b':
+        with open(dir/"ori_2_gpt-j-6b_16"/"entropy", "rb") as fp:
             x_ori = pickle.load(fp)
         fp.close()
-        with open(dir/"ori_5_Llama-2-7b-hf_16"/"score_list", "rb") as fp:
+        with open(dir/"ori_2_gpt-j-6b_16"/"f1_list", "rb") as fp:
             y_ori = pickle.load(fp)
         fp.close()
-        with open(dir/"sorted_5_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+        with open(dir/"sorted_2_gpt-j-6b_16"/"entropy", "rb") as fp:
             x_sorted = pickle.load(fp)
         fp.close()
-        with open(dir/"sorted_5_Llama-2-7b-hf_16"/"score_list", "rb") as fp:
+        with open(dir/"sorted_2_gpt-j-6b_16"/"f1_list", "rb") as fp:
             y_sorted = pickle.load(fp)
         fp.close()
-        # with open(dir/"bubble_5_gpt-j-6b_16"/"entropy", "rb") as fp:
-        #     x_bubble = pickle.load(fp)
-        # fp.close()
-        # with open(dir/"bubble_5_gpt-j-6b_16"/"score_list", "rb") as fp:
-        #     y_bubble = pickle.load(fp)
-        # fp.close()
-        plt.figure(figsize=(15, 6))
-        plot_ori(x_ori, y_ori)
-        plot_sort(x_sorted, y_sorted)
-        # plot_bubble(x_bubble, y_bubble)
-        plt.title('sst5_Llama-2-7b-hf')
-        plt.xlabel('entropy')
-        plt.ylabel('accuracy')
-        plt.legend(fontsize=6)
-        plt.savefig('sst5_Llama-2-7b-hf_100.png')
-        
-    if args.dataset == "sst2" and args.model == 'gpt2-xl':
-        
-        with open(dir/"ori_2_gpt2-xl_16"/"entropy", "rb") as fp:
-            x_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"ori_2_gpt2-xl_16"/"f1_list", "rb") as fp:
-            y_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_2_gpt2-xl_16"/"entropy", "rb") as fp:
-            x_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_2_gpt2-xl_16"/"f1_list", "rb") as fp:
-            y_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"bubble_2_gpt2-xl_16"/"entropy", "rb") as fp:
+        with open(dir/"bubble_2_gpt-j-6b_16"/"entropy", "rb") as fp:
             x_bubble = pickle.load(fp)
         fp.close()
-        with open(dir/"bubble_2_gpt2-xl_16"/"f1_list", "rb") as fp:
+        with open(dir/"bubble_2_gpt-j-6b_16"/"f1_list", "rb") as fp:
             y_bubble = pickle.load(fp)
         fp.close()
         y_ori = [item for item in y_ori]
         y_sorted = [item for item in y_sorted]
         y_bubble = [item for item in y_bubble]
+        plt.figure(figsize=(16, 9))
         plot_ori(x_ori, y_ori)
         plot_sort(x_sorted, y_sorted)
         plot_bubble(x_bubble, y_bubble)
-        plt.title('sst2_gpt2-xl')
+        plt.title('2_gpt-j-6b_16')
         plt.xlabel('entropy')
         plt.ylabel('F1')
         plt.legend(fontsize=6)
-        plt.savefig('sst2_gpt2-xl_16.png')
+        plt.savefig('2_gpt-j-6b_16.png')
         
-    if args.dataset == "sst2" and args.model == 'Llama-2-7b-hf':
+    # if args.dataset == "sst5" and args.model == 'EleutherAI/gpt-j-6b':
+    #     with open(dir/"ori_5_gpt-j-6b_16"/"entropy", "rb") as fp:
+    #         x_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"ori_5_gpt-j-6b_16"/"score_list", "rb") as fp:
+    #         y_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_5_gpt-j-6b_16"/"entropy", "rb") as fp:
+    #         x_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_5_gpt-j-6b_16"/"score_list", "rb") as fp:
+    #         y_sorted = pickle.load(fp)
+    #     fp.close()
+    #     # with open(dir/"bubble_5_gpt-j-6b_16"/"entropy", "rb") as fp:
+    #     #     x_bubble = pickle.load(fp)
+    #     # fp.close()
+    #     # with open(dir/"bubble_5_gpt-j-6b_16"/"score_list", "rb") as fp:
+    #     #     y_bubble = pickle.load(fp)
+    #     # fp.close()
+    #     plt.figure(figsize=(15, 6))
+    #     plot_ori(x_ori, y_ori)
+    #     plot_sort(x_sorted, y_sorted)
+    #     # plot_bubble(x_bubble, y_bubble)
+    #     plt.title('sst5_gpt-j-6b')
+    #     plt.xlabel('entropy')
+    #     plt.ylabel('accuracy')
+    #     plt.legend(fontsize=6)
+    #     plt.savefig('sst5_gpt-j-6b_100.png')
+    
+    # if args.dataset == "sst5" and args.model == 'NousResearch/Llama-2-7b-hf':
+    #     with open(dir/"ori_5_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    #         x_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"ori_5_Llama-2-7b-hf_16"/"score_list", "rb") as fp:
+    #         y_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_5_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    #         x_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_5_Llama-2-7b-hf_16"/"score_list", "rb") as fp:
+    #         y_sorted = pickle.load(fp)
+    #     fp.close()
+    #     # with open(dir/"bubble_5_gpt-j-6b_16"/"entropy", "rb") as fp:
+    #     #     x_bubble = pickle.load(fp)
+    #     # fp.close()
+    #     # with open(dir/"bubble_5_gpt-j-6b_16"/"score_list", "rb") as fp:
+    #     #     y_bubble = pickle.load(fp)
+    #     # fp.close()
+    #     plt.figure(figsize=(15, 6))
+    #     plot_ori(x_ori, y_ori)
+    #     plot_sort(x_sorted, y_sorted)
+    #     # plot_bubble(x_bubble, y_bubble)
+    #     plt.title('sst5_Llama-2-7b-hf')
+    #     plt.xlabel('entropy')
+    #     plt.ylabel('accuracy')
+    #     plt.legend(fontsize=6)
+    #     plt.savefig('sst5_Llama-2-7b-hf_100.png')
         
-        with open(dir/"ori_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
-            x_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"ori_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
-            y_ori = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
-            x_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"sorted_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
-            y_sorted = pickle.load(fp)
-        fp.close()
-        with open(dir/"bubble_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
-            x_bubble = pickle.load(fp)
-        fp.close()
-        with open(dir/"bubble_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
-            y_bubble = pickle.load(fp)
-        fp.close()
-        y_ori = [item for item in y_ori]
-        y_sorted = [item for item in y_sorted]
-        y_bubble = [item for item in y_bubble]
-        plot_ori(x_ori, y_ori)
-        plot_sort(x_sorted, y_sorted)
-        plot_bubble(x_bubble, y_bubble)
-        plt.title('sst2_Llama-2-7b-h')
-        plt.xlabel('entropy')
-        plt.ylabel('F1')
-        plt.legend(fontsize=6)
-        plt.savefig('sst2_Llama-2-7b-h_16.png')
+    # if args.dataset == "sst2" and args.model == 'gpt2-xl':
         
-    if args.dataset == "sst2" and args.model == 'EleutherAI/gpt-j-6b':
-        with open(f"../scratch/data/diff_sort/plot/entropy_ori_2_E", "rb") as fp:
-            x_ori = pickle.load(fp)
-        fp.close()
-        with open(f"../scratch/data/diff_sort/plot/score_list_ori_2_E", "rb") as fp:
-            y_ori = pickle.load(fp)
-        fp.close()
-        with open(f"../scratch/data/diff_sort/plot/entropy_sorted_2_E", "rb") as fp:
-            x_sorted = pickle.load(fp)
-        fp.close()
-        with open(f"../scratch/data/diff_sort/plot/score_list_sorted_2_E", "rb") as fp:
-            y_sorted = pickle.load(fp)
-        fp.close()
-        with open(f"../scratch/data/diff_sort/plot/entropy_bubble_2_E", "rb") as fp:
-            x_bubble = pickle.load(fp)
-        fp.close()
-        with open(f"../scratch/data/diff_sort/plot/score_list_bubble_2_E", "rb") as fp:
-            y_bubble = pickle.load(fp)
-        fp.close()
-        plot_ori(x_ori, y_ori)
-        plot_sort(x_sorted, y_sorted)
-        plot_bubble(x_bubble, y_bubble)
-        plt.title('sst2_EleutherAI/gpt-j-6b')
-        plt.xlabel('entropy')
-        plt.ylabel('accuracy')
-        plt.legend(fontsize=6)
-        plt.savefig('sst2_gpt-j-6b.png')
+    #     with open(dir/"ori_2_gpt2-xl_16"/"entropy", "rb") as fp:
+    #         x_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"ori_2_gpt2-xl_16"/"f1_list", "rb") as fp:
+    #         y_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_2_gpt2-xl_16"/"entropy", "rb") as fp:
+    #         x_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_2_gpt2-xl_16"/"f1_list", "rb") as fp:
+    #         y_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"bubble_2_gpt2-xl_16"/"entropy", "rb") as fp:
+    #         x_bubble = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"bubble_2_gpt2-xl_16"/"f1_list", "rb") as fp:
+    #         y_bubble = pickle.load(fp)
+    #     fp.close()
+    #     y_ori = [item for item in y_ori]
+    #     y_sorted = [item for item in y_sorted]
+    #     y_bubble = [item for item in y_bubble]
+    #     plot_ori(x_ori, y_ori)
+    #     plot_sort(x_sorted, y_sorted)
+    #     plot_bubble(x_bubble, y_bubble)
+    #     plt.title('sst2_gpt2-xl')
+    #     plt.xlabel('entropy')
+    #     plt.ylabel('F1')
+    #     plt.legend(fontsize=6)
+    #     plt.savefig('sst2_gpt2-xl_16.png')
+        
+    # if args.dataset == "sst2" and args.model == 'Llama-2-7b-hf':
+        
+    #     with open(dir/"ori_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    #         x_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"ori_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
+    #         y_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    #         x_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"sorted_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
+    #         y_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"bubble_2_Llama-2-7b-hf_16"/"entropy", "rb") as fp:
+    #         x_bubble = pickle.load(fp)
+    #     fp.close()
+    #     with open(dir/"bubble_2_Llama-2-7b-hf_16"/"f1_list", "rb") as fp:
+    #         y_bubble = pickle.load(fp)
+    #     fp.close()
+    #     y_ori = [item for item in y_ori]
+    #     y_sorted = [item for item in y_sorted]
+    #     y_bubble = [item for item in y_bubble]
+    #     plot_ori(x_ori, y_ori)
+    #     plot_sort(x_sorted, y_sorted)
+    #     plot_bubble(x_bubble, y_bubble)
+    #     plt.title('sst2_Llama-2-7b-h')
+    #     plt.xlabel('entropy')
+    #     plt.ylabel('F1')
+    #     plt.legend(fontsize=6)
+    #     plt.savefig('sst2_Llama-2-7b-h_16.png')
+        
+    # if args.dataset == "sst2" and args.model == 'EleutherAI/gpt-j-6b':
+    #     with open(f"../scratch/data/diff_sort/plot/entropy_ori_2_E", "rb") as fp:
+    #         x_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(f"../scratch/data/diff_sort/plot/score_list_ori_2_E", "rb") as fp:
+    #         y_ori = pickle.load(fp)
+    #     fp.close()
+    #     with open(f"../scratch/data/diff_sort/plot/entropy_sorted_2_E", "rb") as fp:
+    #         x_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(f"../scratch/data/diff_sort/plot/score_list_sorted_2_E", "rb") as fp:
+    #         y_sorted = pickle.load(fp)
+    #     fp.close()
+    #     with open(f"../scratch/data/diff_sort/plot/entropy_bubble_2_E", "rb") as fp:
+    #         x_bubble = pickle.load(fp)
+    #     fp.close()
+    #     with open(f"../scratch/data/diff_sort/plot/score_list_bubble_2_E", "rb") as fp:
+    #         y_bubble = pickle.load(fp)
+    #     fp.close()
+    #     plot_ori(x_ori, y_ori)
+    #     plot_sort(x_sorted, y_sorted)
+    #     plot_bubble(x_bubble, y_bubble)
+    #     plt.title('sst2_EleutherAI/gpt-j-6b')
+    #     plt.xlabel('entropy')
+    #     plt.ylabel('accuracy')
+    #     plt.legend(fontsize=6)
+    #     plt.savefig('sst2_gpt-j-6b.png')
 
 
 def plot_ori(x, y):

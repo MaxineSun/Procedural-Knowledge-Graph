@@ -38,17 +38,17 @@ def parse_args():
     parser.add_argument('--lr_encoder', type=float, default=1e-7)
     parser.add_argument('--score_type', nargs='?', default="emd", help='choose the score type') 
     
-    parser.add_argument('--shuffle_mode', nargs='?', default="ori", help='choose the prompt examples shuffle mode')
+    parser.add_argument('--shuffle_mode', nargs='?', default="sorted", help='choose the prompt examples shuffle mode')
     parser.add_argument('--NP_mode', nargs='?', default="None", help='choose the NP prompt examples shuffle mode') 
     parser.add_argument('--case', nargs='?', default="bi-class", help='choose the ICL case type') 
     parser.add_argument('--random_seed', type=int, default=42) 
     parser.add_argument('--sequence_length', type=int, default=16) 
     parser.add_argument('--data_classes', type=int, default=4) 
     parser.add_argument('--parallel_id', type=int, default=1) 
-    parser.add_argument('--dataset', nargs='?', default='CR', help='choose the dataset') # ag_news CR sst2 sst5 dbpedia_14
+    parser.add_argument('--dataset', nargs='?', default='sst2', help='choose the dataset') # ag_news CR sst2 sst5 dbpedia_14
     parser.add_argument('--model', nargs='?', default='gpt-j-6b', help='choose the model name') # gpt2-xl  gpt-j-6b  NousResearch/Llama-2-7b-hf
     
-    parser.add_argument('--data_dir', nargs='?', default='sorted_5_gpt2-xl_8', help='choose the file path name') 
+    parser.add_argument('--data_dir', nargs='?', default='sorted_2_gpt-j-6b_16', help='choose the file path name') 
     parser.set_defaults(directed=False)
 
     return parser.parse_args()

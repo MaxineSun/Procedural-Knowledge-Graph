@@ -5,16 +5,18 @@ import openai
 from openai import OpenAI
 import time
 import numpy as np
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoConfig, AutoModelForCausalLM
+from accelerate import init_empty_weights
 import transformers
 import torch
 import re
 
-OPENICL_API_NAME_LIST = ['opt-175b', 'gpt3', 'llama', 'gpt-3.5-turbo-instruct']
+OPENICL_API_NAME_LIST = ['opt-175b', 'gpt3', 'llama', 'llama70b', 'gpt-3.5-turbo-instruct']
 OPENICL_API_PARAMETER_DICT = {
     'opt-175b': ['URL', 'headers'],
     'gpt3': ['engine', 'temperature', 'max_tokens', 'top_p', 'frequency_penalty', 'presence_penalty', 'sleep_time'],
     'llama': [],
+    'llama70b': [],
     'gpt-3.5-turbo-instruct':[]
 }
 OPENICL_API_REQUEST_CONFIG = {
@@ -34,6 +36,7 @@ OPENICL_API_REQUEST_CONFIG = {
         'sleep_time': 3
     },
     'llama': {},
+    'llama70b': {},
     'gpt-3.5-turbo-instruct':{}
 }
 PROXIES = {"https": "", "http": ""}
@@ -128,6 +131,65 @@ def api_get_tokens(api_name, input_texts):
         generated = generated[1]
         generated = generated[:-2]
         return complete_output, [generated]
+    
+    
+    if api_name == 'llama70b':
+        model = 'NousResearch/Llama-2-7b-hf' #"meta-llama/Llama-2-7b-chat-hf"
+
+        # tokenizer = AutoTokenizer.from_pretrained(model)
+        
+        model_path = "/cluster/work/sachan/shridhar/models/llama-70B"
+        print("====")
+        config = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+        print("====")
+        with init_empty_weights():
+            model = AutoModelForCausalLM.from_config(config, trust_remote_code=True)
+        print("====")
+        model = load_checkpoint_and_dispatch(model, model_path,
+                                            device_map='auto',
+                                            offload_folder="offload",
+                                            offload_state_dict=True,
+                                            dtype = "float16",
+                                            no_split_module_classes=["LlamaDecoderLayer"])
+        print("====")
+        tokenizer = AutoTokenizer.from_pretrained(model)
+        
+        print(a)
+        # AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16).to(args.device)
+
+        pipeline = transformers.pipeline(
+            "text-generation",
+            model=model,
+            torch_dtype=torch.float16,
+            device_map="auto",
+        )
+        sequences = pipeline(
+            input_texts[0],
+            do_sample=True,
+            top_k=10,
+            num_return_sequences=1,
+            eos_token_id=tokenizer.eos_token_id,
+            max_length=1500,
+        )
+        result = sequences[0]['generated_text']
+        result = result.split("\n Question")
+        if len(result) < 5:
+            result = sequences[0]['generated_text']
+            result = result.split("\nQuestion")
+        result = ["Question"+item for item in result]
+        result[0] = result[0][9:]
+        result = [item+"\n " for item in result]
+        complete_output = [''.join(result[:5])]
+        generated = result[4].split("Answer: Let's think step by step.")
+        if len(generated)<2:
+            generated = result[4].split("Answer:")
+        generated = generated[1]
+        generated = generated[:-2]
+        print(complete_output)
+        print([generated])
+        print(a)
+        return complete_output, [generated]
+    
         
     if api_name == 'gpt-3.5-turbo-instruct':
         client = OpenAI()

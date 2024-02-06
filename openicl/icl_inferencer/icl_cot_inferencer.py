@@ -100,7 +100,6 @@ class CoTInferencer(BaseInferencer):
             # 4-1. Wrap prompts with Dataloader
             dataloader = get_dataloader(prompt_list, self.batch_size)
             output_handler.save_orgin_prompts(prompt_list)
-
             for entry in tqdm(dataloader, disable=not self.is_main_process):
                 # 4-2-1. Inference with local model
                 if not self.call_api:
@@ -121,7 +120,7 @@ class CoTInferencer(BaseInferencer):
                                                                 skip_special_tokens=True)
                 # 4-2-2. Inference with remote API
                 else:
-                    entry = shuffle_examples(entry)
+                    # entry = shuffle_examples(entry) #### sort the examples
                     complete_output, generated = api_get_tokens(self.api_name, entry)
 
                 # 4-2-3. Save current output

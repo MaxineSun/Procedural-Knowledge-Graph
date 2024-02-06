@@ -84,7 +84,7 @@ class BaseRetriever:
             labels = list(set(self.test_ds[self.dataset_reader.output_column]))
         return labels
 
-    def generate_ice(self, dataset, idx_list: List[int], ice_template: Optional[PromptTemplate] = None) -> str:
+    def generate_ice(self, idx_list: List[int], ice_template: Optional[PromptTemplate] = None) -> str:
         generated_ice_list = []
         dr = self.dataset_reader
         for idx in idx_list:
@@ -93,11 +93,9 @@ class BaseRetriever:
                                                             [self.index_ds[idx][ctx] for ctx in dr.input_columns] + [
                                                                 self.index_ds[idx][dr.output_column]]))))
             else:
-
                 generated_ice_list.append(
-                    ice_template.generate_ice_item(dataset, self.index_ds[idx], self.index_ds[idx][dr.output_column])) 
+                    ice_template.generate_ice_item(self.index_ds[idx], self.index_ds[idx][dr.output_column])) 
         generated_ice = self.ice_separator.join(generated_ice_list) + self.ice_eos_token
-
         return generated_ice
 
     def generate_prompt(self, idx: int, ice: str, ice_template: Optional[PromptTemplate] = None,
